@@ -13,3 +13,8 @@ root.render(
     <App />
   </React.StrictMode>
 );
+<body class="bg-caramel-50 text-gray-800 antialiased transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
