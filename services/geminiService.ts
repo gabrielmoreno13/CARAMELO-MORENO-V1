@@ -1,7 +1,7 @@
 import { GoogleGenAI, Chat, Modality } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource } from "../types";
 
-const API_KEY = process.env.API_KEY || '';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 class GeminiService {
   private ai: GoogleGenAI;
