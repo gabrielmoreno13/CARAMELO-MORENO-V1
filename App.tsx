@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppState, AppView, UserProfile, AnamnesisData } from './types';
 import { LandingPage } from './components/LandingPage';
 import { Registration } from './components/Registration';
+import { Login } from './components/Login';
 import { Anamnesis } from './components/Anamnesis';
 import { ChatInterface } from './components/ChatInterface';
 import { OurApproachPage, ForBusinessPage, ProfessionalHelpPage, AboutUsPage } from './components/ExtraPages';
+import { supabase } from './services/supabaseClient';
+import { dataService } from './services/dataService';
+
+const STORAGE_KEY = 'caramelo_app_state_v1';
+const THEME_KEY = 'caramelo_theme';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -12,6 +18,58 @@ const App: React.FC = () => {
     user: null,
     anamnesis: null,
   });
+
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Estado do Tema Global
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  // Aplicar tema no HTML
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem(THEME_KEY, 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  // Tenta restaurar sessão do Supabase ao iniciar
+  useEffect(() => {
+    const restoreSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+            try {
+                const profile = await dataService.getProfile(session.user.id);
+                const anamnesis = await dataService.getAnamnesis(session.user.id);
+                if (profile) {
+                    setState(prev => ({
+                        ...prev,
+                        user: profile,
+                        anamnesis: anamnesis,
+                        view: anamnesis ? AppView.CHAT : AppView.ANAMNESIS
+                    }));
+                }
+            } catch (e) {
+                console.error("Erro ao restaurar sessão", e);
+            }
+        }
+        setIsLoaded(true);
+    };
+    restoreSession();
+  }, []);
+
 
   const navigate = (view: AppView) => {
     setState(prev => ({ ...prev, view }));
@@ -25,43 +83,65 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, user, view: AppView.ANAMNESIS }));
   };
 
-  const handleAnamnesisComplete = (anamnesis: AnamnesisData) => {
+  const handleLoginComplete = (user: UserProfile, anamnesis: AnamnesisData | null) => {
+     setState(prev => ({
+         ...prev,
+         user,
+         anamnesis,
+         view: anamnesis ? AppView.CHAT : AppView.ANAMNESIS
+     }));
+  };
+
+  const handleAnamnesisComplete = async (anamnesis: AnamnesisData) => {
+    if (state.user?.id) {
+        await dataService.saveAnamnesis(state.user.id, anamnesis);
+    }
     setState(prev => ({ ...prev, anamnesis, view: AppView.CHAT }));
   };
 
-  const goBackToLanding = () => {
+  const goBackToLanding = async () => {
     if (state.view === AppView.CHAT) {
-        if (!window.confirm("Deseja realmente sair? O histórico desta sessão será perdido.")) return;
+        if (!window.confirm("Deseja sair da sua conta?")) return;
+        await supabase.auth.signOut();
     }
     setState(prev => ({ ...prev, view: AppView.LANDING, anamnesis: null, user: null }));
   };
 
+  if (!isLoaded) return null;
+
+  const commonProps = { isDarkMode, toggleTheme };
+
   return (
-    <main className="font-sans text-gray-900">
+    <main className="font-sans text-gray-900 dark:text-gray-100 h-full bg-white dark:bg-gray-900 transition-colors duration-300">
       {state.view === AppView.LANDING && (
-        <LandingPage onStart={startRegistration} onNavigate={navigate} />
+        <LandingPage onStart={startRegistration} onNavigate={navigate} {...commonProps} />
+      )}
+
+      {state.view === AppView.LOGIN && (
+        <Login onLoginSuccess={handleLoginComplete} onBack={() => navigate(AppView.LANDING)} {...commonProps} />
       )}
 
       {state.view === AppView.OUR_APPROACH && (
-        <OurApproachPage onStart={startRegistration} onNavigate={navigate} />
+        <OurApproachPage onStart={startRegistration} onNavigate={navigate} {...commonProps} />
       )}
 
       {state.view === AppView.FOR_BUSINESS && (
-        <ForBusinessPage onStart={startRegistration} onNavigate={navigate} />
+        <ForBusinessPage onStart={startRegistration} onNavigate={navigate} {...commonProps} />
       )}
 
       {state.view === AppView.PROFESSIONAL_HELP && (
-        <ProfessionalHelpPage onStart={startRegistration} onNavigate={navigate} />
+        <ProfessionalHelpPage onStart={startRegistration} onNavigate={navigate} {...commonProps} />
       )}
 
       {state.view === AppView.ABOUT_US && (
-        <AboutUsPage onStart={startRegistration} onNavigate={navigate} />
+        <AboutUsPage onStart={startRegistration} onNavigate={navigate} {...commonProps} />
       )}
 
       {state.view === AppView.REGISTER && (
         <Registration 
           onComplete={handleRegistrationComplete} 
           onBack={goBackToLanding} 
+          {...commonProps}
         />
       )}
 
@@ -69,6 +149,7 @@ const App: React.FC = () => {
         <Anamnesis 
           userName={state.user.name} 
           onComplete={handleAnamnesisComplete} 
+          {...commonProps}
         />
       )}
 
@@ -77,6 +158,7 @@ const App: React.FC = () => {
           user={state.user} 
           anamnesis={state.anamnesis} 
           onExit={goBackToLanding}
+          {...commonProps}
         />
       )}
     </main>

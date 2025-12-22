@@ -1,7 +1,7 @@
 import { GoogleGenAI, Chat, Modality } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource } from "../types";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const API_KEY = process.env.API_KEY || '';
 
 class GeminiService {
   private ai: GoogleGenAI;
@@ -95,13 +95,13 @@ class GeminiService {
     }
   }
 
-  public async transcribeAudio(audioBase64: string): Promise<string> {
+  public async transcribeAudio(audioBase64: string, mimeType: string = 'audio/wav'): Promise<string> {
     try {
       const response = await this.ai.models.generateContent({
         model: this.TRANSCRIPTION_MODEL,
         contents: {
           parts: [
-            { inlineData: { mimeType: 'audio/wav', data: audioBase64 } },
+            { inlineData: { mimeType: mimeType, data: audioBase64 } },
             { text: "Transcreva o áudio." }
           ]
         }

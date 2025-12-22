@@ -1,5 +1,6 @@
 export enum AppView {
   LANDING = 'LANDING',
+  LOGIN = 'LOGIN', // Nova tela
   REGISTER = 'REGISTER',
   ANAMNESIS = 'ANAMNESIS',
   CHAT = 'CHAT',
@@ -11,8 +12,11 @@ export enum AppView {
 }
 
 export interface UserProfile {
+  id?: string; // ID do Supabase Auth
   name: string;
   email: string;
+  cpf: string; // Novo campo
+  company: string; // Novo campo
   phone: string;
   age: number;
 }
