@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// No Vite, usamos import.meta.env em vez de process.env
+// No Vite, é OBRIGATÓRIO usar import.meta.env
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ ATENÇÃO: Variáveis do Supabase não encontradas. O login não funcionará.');
+  console.error('ERRO: Chaves do Supabase não encontradas. O site pode travar.');
 }
 
-// Cria a conexão oficial
 export const supabase = createClient(
   supabaseUrl || '',
   supabaseAnonKey || ''
