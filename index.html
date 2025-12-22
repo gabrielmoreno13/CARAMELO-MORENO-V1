@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -7,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
-        darkMode: 'class', // Habilita modo escuro via classe
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
@@ -15,16 +16,8 @@
             },
             colors: {
               caramel: {
-                50: '#fffbf0',
-                100: '#fff4c6',
-                200: '#ffe688',
-                300: '#ffd24a',
-                400: '#ffb91a',
-                500: '#f59e0b', // Base
-                600: '#d97706',
-                700: '#b45309',
-                800: '#92400e',
-                900: '#78350f',
+                50: '#fffbf0', 100: '#fff4c6', 200: '#ffe688', 300: '#ffd24a', 400: '#ffb91a',
+                500: '#f59e0b', 600: '#d97706', 700: '#b45309', 800: '#92400e', 900: '#78350f',
               }
             }
           }
@@ -34,6 +27,6 @@
   </head>
   <body class="bg-caramel-50 text-gray-800 antialiased transition-colors duration-300">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script> 
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
