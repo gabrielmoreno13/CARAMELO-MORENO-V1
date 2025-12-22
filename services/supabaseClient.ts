@@ -1,15 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Verificação de segurança para evitar crash se as variáveis não estiverem definidas ou forem inválidas.
-// O createClient lança erro se a URL não for um HTTP/HTTPS válido.
-const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// No Vite, usamos import.meta.env em vez de process.env
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const isValidUrl = (url: string | undefined): boolean => {
-  return !!url && (url.startsWith('http://') || url.startsWith('https://'));
-};
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️ ATENÇÃO: Variáveis do Supabase não encontradas. O login não funcionará.');
+}
 
-const SUPABASE_URL = isValidUrl(envUrl) ? envUrl! : 'https://projeto-exemplo.supabase.co';
-const SUPABASE_ANON_KEY = envKey || 'chave-anonima-exemplo';
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Cria a conexão oficial
+export const supabase = createClient(
+  supabaseUrl || '',
+  supabaseAnonKey || ''
+);
