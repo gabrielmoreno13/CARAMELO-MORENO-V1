@@ -1,0 +1,7 @@
+{
+  "name": "CARAMELO - Assistente de Saúde Mental",
+  "description": "Um assistente de saúde mental baseado em TCC para ansiedade, insônia e depressão. Oferece acolhimento via IA e encaminhamento para especialistas.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
