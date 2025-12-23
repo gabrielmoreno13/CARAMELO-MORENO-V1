@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { User, ChevronLeft, Moon, Sun, Lock, Briefcase, FileText, Loader2, Mail, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
-import { dataService } from '../services/dataService';
 
 interface RegistrationProps {
   onComplete: (user: UserProfile) => void;
@@ -32,7 +31,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Efeito para calcular força da senha
   useEffect(() => {
       const pass = formData.password;
       let score = 0;
@@ -77,7 +75,9 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     }
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // SÊNIOR FIX: Passamos todos os dados no 'data' (metadata).
+      // O Trigger SQL 'handle_new_user' vai ler isso e criar o perfil automaticamente.
+      const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -85,7 +85,7 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
                 name: formData.name,
                 company: formData.company,
                 cpf: formData.cpf,
-                age: formData.age,
+                age: parseInt(formData.age) || 0,
                 phone: formData.phone
             }
         }
@@ -96,26 +96,29 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
         throw authError;
       }
       
-      if (authData.user && !authData.session) {
+      // Cenário 1: Confirmação de e-mail ATIVADA (User existe, mas Session é null)
+      if (data.user && !data.session) {
           setIsLoading(false);
-          setSuccessMessage("Conta criada! Verifique seu e-mail para confirmar.");
+          setSuccessMessage("Cadastro realizado! Verifique seu e-mail para ativar a conta.");
           return;
       }
 
-      if (!authData.user || !authData.session) throw new Error("Erro ao iniciar sessão.");
-
-      const userProfile: UserProfile = {
-        id: authData.user.id,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        cpf: formData.cpf,
-        company: formData.company,
-        age: parseInt(formData.age) || 0
-      };
-
-      await dataService.saveProfile(userProfile);
-      onComplete(userProfile);
+      // Cenário 2: Confirmação de e-mail DESATIVADA (Login imediato)
+      if (data.user && data.session) {
+         // Pequeno delay para garantir que o Trigger do banco terminou de rodar
+         await new Promise(r => setTimeout(r, 1000));
+         
+         const userProfile: UserProfile = {
+            id: data.user.id,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            cpf: formData.cpf,
+            company: formData.company,
+            age: parseInt(formData.age) || 0
+         };
+         onComplete(userProfile);
+      }
 
     } catch (err: any) {
       if (err.message === "ALREADY_REGISTERED") setError("Este e-mail já está cadastrado.");
@@ -131,8 +134,12 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
             <div className="bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl p-8 max-w-md w-full text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600"><CheckCircle size={32} /></div>
                 <h2 className="text-2xl font-bold dark:text-white mb-2">Verifique seu E-mail</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">Enviamos um link para <strong>{formData.email}</strong>.</p>
-                <button onClick={onBack} className="w-full bg-caramel-600 text-white font-bold py-3 rounded-xl">Voltar para Login</button>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    Enviamos um link de confirmação para <strong>{formData.email}</strong>.
+                    <br/><br/>
+                    <span className="text-sm text-gray-500">Clique no link para ativar sua conta e acessar o Caramelo.</span>
+                </p>
+                <button onClick={onBack} className="w-full bg-caramel-600 text-white font-bold py-3 rounded-xl hover:bg-caramel-700 transition">Voltar para Login</button>
             </div>
         </div>
       );

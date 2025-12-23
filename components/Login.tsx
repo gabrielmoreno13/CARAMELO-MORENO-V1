@@ -29,6 +29,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
       });
 
       if (authError) {
+          // Tratamento específico para e-mail não confirmado
           if (authError.message.includes("Email not confirmed")) {
               throw new Error("EMAIL_NOT_CONFIRMED");
           }
@@ -39,31 +40,32 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
       }
 
       if (authData.user) {
-        // 1. Tentar carregar Perfil existente
-        let profile = await dataService.getProfile(authData.user.id);
+        // Busca o perfil que o TRIGGER criou
+        const profile = await dataService.getProfile(authData.user.id);
         
-        // 2. SELF-HEALING: Tenta recuperar do metadata se o perfil não existir
-        if (!profile && authData.user.user_metadata) {
-            console.log("Perfil não encontrado. Tentando recuperar via Metadata...");
-            const meta = authData.user.user_metadata;
-            
-            if (meta.name && meta.cpf) {
-                const recoveredProfile: UserProfile = {
+        if (!profile) {
+             // Fallback de segurança: Se o trigger falhou por algum motivo cósmico
+             // tentamos recriar o perfil baseado nos metadados
+             if (authData.user.user_metadata?.name) {
+                 const meta = authData.user.user_metadata;
+                 const newProfile: UserProfile = {
                     id: authData.user.id,
                     name: meta.name,
                     email: authData.user.email || '',
-                    cpf: meta.cpf,
+                    cpf: meta.cpf || '',
                     company: meta.company || '',
                     phone: meta.phone || '',
-                    age: parseInt(meta.age) || 0
-                };
-                
-                await dataService.saveProfile(recoveredProfile);
-                profile = recoveredProfile;
-            }
+                    age: parseInt(meta.age) || 0,
+                    avatarHue: 0
+                 };
+                 await dataService.saveProfile(newProfile);
+                 
+                 const anamnesis = await dataService.getAnamnesis(authData.user.id);
+                 onLoginSuccess(newProfile, anamnesis);
+                 return;
+             }
+             throw new Error("Erro: Perfil de usuário não encontrado. Contate o suporte.");
         }
-
-        if (!profile) throw new Error("Perfil não encontrado. Por favor, entre em contato com o suporte.");
 
         const anamnesis = await dataService.getAnamnesis(authData.user.id);
         onLoginSuccess(profile, anamnesis);
@@ -71,7 +73,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
     } catch (err: any) {
       console.error(err);
       if (err.message === "EMAIL_NOT_CONFIRMED") {
-          setError("Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada (e spam).");
+          setError("Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada (e Spam).");
       } else {
           setError(err.message || "Falha no login. Verifique suas credenciais.");
       }
