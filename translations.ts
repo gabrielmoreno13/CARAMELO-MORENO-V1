@@ -1,7 +1,7 @@
 
 import { Language } from './types';
 
-export const translations = {
+export const translations: Record<Language, any> = {
   pt: {
     ourapproach: "Método", forbusiness: "Empresas", professionalhelp: "Ajuda", aboutus: "Sobre",
     heroTitle: "Seu amigo leal v3.", heroSub: "IA de Auto-cuidado Empática",
@@ -55,6 +55,26 @@ export const translations = {
     aboutMissionDesc: "Tornar o bem-estar mental acessível para todos os brasileiros.",
     aboutWhyTitle: "Nossa História",
     aboutYear: "Lançamento", aboutLocation: "Brasil", aboutTech: "Inteligência", aboutLove: "Propósito"
+  },
+  en: {
+    heroTitle: "Your loyal friend v3.", login: "Login", register: "Register", app: "App",
+    heroSub: "Empathetic Self-Care AI", heroDesc: "v3 uses Caramelo to listen and help your daily well-being.",
+    btnStart: "Talk to Caramelo", btnLearn: "Learn More", back: "Back", finish: "Finish", loginTitle: "Welcome",
+    loginSub: "Your safe zone v3.", emailLabel: "Email", passLabel: "Password", loginBtn: "Login",
+    regTitle: "New Journey", regSub: "Create your secure account.", nameLabel: "Name", ageLabel: "Age",
+    regBtn: "Start Now", anaWelcome: "Hello, {name}", anaSub: "I'm a good boy, you can trust me.",
+    anaStep: "Step", anaContinue: "Next", anaFinish: "Start", emergency: "Emergency? Call local help.",
+    methodology: "Our Method", whyTitle: "Why Caramelo?", faqTitle: "FAQ", aboutMissionTitle: "Our Mission"
+  },
+  es: {
+    heroTitle: "Tu amigo leal v3.", login: "Entrar", register: "Registro", app: "App",
+    heroSub: "IA de Autocuidado Empática", heroDesc: "v3 usa Caramelo para escucharte y ayudarte.",
+    btnStart: "Hablar con Caramelo", btnLearn: "Saber Más", back: "Volver", finish: "Finalizar",
+    loginTitle: "Bienvenido", loginSub: "Tu zona segura v3.", emailLabel: "Email", passLabel: "Contraseña",
+    loginBtn: "Entrar", regTitle: "Nuevo Viaje", regSub: "Crea tu cuenta segura.", nameLabel: "Nombre",
+    ageLabel: "Edad", regBtn: "Empezar Ahora", anaWelcome: "Hola, {name}", anaSub: "Soy un buen chico, confía en mí.",
+    anaStep: "Paso", anaContinue: "Siguiente", anaFinish: "Empezar", emergency: "Emergencia? Llama al 188.",
+    methodology: "Método", whyTitle: "¿Por qué Caramelo?", faqTitle: "Dudas", aboutMissionTitle: "Nuestra Misión"
   }
 };
 

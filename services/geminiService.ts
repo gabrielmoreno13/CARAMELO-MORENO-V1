@@ -15,36 +15,35 @@ class GeminiService {
     const ai = this.getAI();
     const modelToUse = mode === 'thinking' ? this.MODEL_PRO : this.MODEL_FLASH;
     
-    const systemInstruction = `Você é o CARAMELO, um vira-lata caramelo leal e um assistente de auto-cuidado. 
-    Usuário: ${user.name}. 
-    REGRAS CRÍTICAS:
-    1. Seja breve e direto. Máximo de 3 frases por resposta.
-    2. NUNCA mencione termos como "TCC", "Terapia", "Psicologia" ou "Psicólogo".
-    3. Use uma linguagem simples, acolhedora e amigável, como um amigo fiel.
-    4. Se o usuário estiver em crise grave, sugira o CVV 188 de forma sutil.
-    5. Foco em auto-cuidado e bem-estar prático.`;
+    // Instrução focada em auto-cuidado, estilo Woebot, sem termos clínicos.
+    const systemInstruction = `Você é o CARAMELO, um vira-lata caramelo leal e seu assistente de auto-cuidado pessoal.
+    O usuário se chama ${user.name}.
+    
+    REGRAS DE OURO:
+    1. BREVIDADE ABSOLUTA: Responda em NO MÁXIMO 3 frases curtas.
+    2. TOM: Seja caloroso, empático e amigável como um cachorro fiel.
+    3. PROIBIDO: Nunca use palavras como "Terapia", "Psicologia", "TCC", "Psicoterapeuta" ou "Clínico".
+    4. PAPEL: Você é um assistente de auto-cuidado e acolhimento, um amigo que ouve.
+    5. INTERAÇÃO: Se o usuário estiver triste, ofereça ouvir ou uma ferramenta rápida (respirar, diário).
+    6. SEGURANÇA: Se detectar risco de vida, mencione o CVV 188 de forma carinhosa.`;
 
-    // Fix: Updated configuration to comply with @google/genai guidelines for thinkingBudget and maxOutputTokens
     const config: any = {
       systemInstruction,
     };
 
     if (mode === 'thinking') {
-      // The effective token limit for the response is `maxOutputTokens` minus the `thinkingBudget`.
-      // We set a total limit of 17000 to leave 1000 tokens for the final response after 16000 thinking tokens.
+      // Pensamento profundo requer budget de tokens, mas mantemos o output final curto.
       config.thinkingConfig = { thinkingBudget: 16000 };
       config.maxOutputTokens = 17000;
     } else {
-      // For standard chat, we disable thinking to minimize latency and provide a standard output limit.
-      config.thinkingConfig = { thinkingBudget: 0 };
-      config.maxOutputTokens = 500;
+      config.maxOutputTokens = 400; // Respostas curtas economizam tempo e tokens
     }
 
     if (mode === 'search') {
       config.tools = [{ googleSearch: {} }];
     }
 
-    const contents: any[] = history.slice(-6).map(m => ({
+    const contents: any[] = history.slice(-5).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text }]
     }));
@@ -65,9 +64,9 @@ class GeminiService {
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } }
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } // Voz amigável
         },
-        systemInstruction: "Você é o Caramelo, um assistente de auto-cuidado em áudio. Seja breve, caloroso e use linguagem simples. Nunca cite terapia ou termos clínicos."
+        systemInstruction: "Você é o Caramelo, um assistente de auto-cuidado em áudio. Seja extremamente breve e acolhedor. Nunca cite termos médicos ou psicológicos."
       }
     });
   }
