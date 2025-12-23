@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { User, ChevronLeft, ShieldCheck, Moon, Sun, Lock, Briefcase, FileText, Loader2, Mail, CheckCircle } from 'lucide-react';
+import { User, ChevronLeft, Moon, Sun, Lock, Briefcase, FileText, Loader2, Mail, CheckCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { dataService } from '../services/dataService';
 
@@ -31,7 +31,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Máscara de CPF
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 11) value = value.slice(0, 11);
@@ -49,7 +48,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     setError(null);
     setSuccessMessage(null);
 
-    // Validação básica de CPF
     if (formData.cpf.length < 14) {
         setError("Por favor, preencha o CPF corretamente.");
         setIsLoading(false);
@@ -57,10 +55,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     }
 
     try {
-      // 1. Criar usuário no Auth do Supabase
-      // IMPORTANTE: Enviamos todos os dados para o 'data' (metadata). 
-      // Isso garante que se o perfil falhar ao salvar (por falta de confirmação de email),
-      // conseguimos recuperar esses dados no primeiro Login.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -69,22 +63,22 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
                 name: formData.name,
                 company: formData.company,
                 cpf: formData.cpf,
-                age: formData.age, // Adicionado
-                phone: formData.phone // Adicionado
+                age: formData.age,
+                phone: formData.phone
             }
         }
       });
 
       if (authError) {
-        if (authError.message === 'User already registered') throw new Error("Este e-mail já possui cadastro.");
-        if (authError.message.includes('API key')) throw new Error("Erro de configuração do sistema (Chave API inválida).");
+        if (authError.message === 'User already registered') throw new Error("ALREADY_REGISTERED");
+        if (authError.message.includes('API key')) throw new Error("Erro de configuração (API Key). Verifique o Netlify.");
         throw authError;
       }
       
-      // CASO ESPECIAL: E-mail requer confirmação
+      // CASO: E-mail requer confirmação (Se a opção estiver ativada no Supabase)
       if (authData.user && !authData.session) {
           setIsLoading(false);
-          setSuccessMessage("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta antes de fazer login.");
+          setSuccessMessage("Conta criada com sucesso!");
           return;
       }
 
@@ -92,7 +86,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
           throw new Error("Erro ao iniciar sessão.");
       }
 
-      // 2. Montar objeto de perfil para salvar no banco de dados (tabela 'profiles')
       const userProfile: UserProfile = {
         id: authData.user.id,
         name: formData.name,
@@ -103,14 +96,16 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
         age: parseInt(formData.age) || 0
       };
 
-      // 3. Salvar perfil detalhado
       await dataService.saveProfile(userProfile);
-
       onComplete(userProfile);
 
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Erro ao criar conta. Tente novamente.");
+      if (err.message === "ALREADY_REGISTERED") {
+         setError("Este e-mail já está cadastrado. Tente fazer login.");
+      } else {
+         setError(err.message || "Erro ao criar conta. Tente novamente.");
+      }
     } finally {
       if (!successMessage) setIsLoading(false);
     }
@@ -119,12 +114,15 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
   if (successMessage) {
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
-            <div className="bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl p-10 max-w-md w-full text-center border border-white dark:border-gray-700">
-                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:text-green-400">
-                    <CheckCircle size={40} />
+            <div className="bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl p-8 max-w-md w-full text-center border border-white dark:border-gray-700">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:text-green-400">
+                    <CheckCircle size={32} />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Quase lá!</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-8">{successMessage}</p>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Verifique seu E-mail</h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    Enviamos um link de confirmação para <strong>{formData.email}</strong>.
+                </p>
+                
                 <button onClick={onBack} className="w-full bg-caramel-600 hover:bg-caramel-700 text-white font-bold py-3 rounded-xl transition">
                     Voltar para Login
                 </button>
@@ -146,10 +144,18 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
             <h2 className="text-3xl font-extrabold text-gray-800 dark:text-white mb-2">Criar Conta</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">Preencha seus dados para criar seu perfil seguro.</p>
 
-            {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-lg mb-4 text-sm font-medium border border-red-100 dark:border-red-900">{error}</div>}
+            {error && (
+                <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-4 rounded-xl mb-6 text-sm font-medium border border-red-100 dark:border-red-900 flex flex-col gap-2">
+                   <div className="flex items-center gap-2"><AlertTriangle size={16}/> {error}</div>
+                   {error.includes('fazer login') && (
+                       <button onClick={onBack} className="bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-200 py-2 rounded-lg text-xs font-bold hover:bg-red-200 transition">
+                           Ir para tela de Login
+                       </button>
+                   )}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* NOME */}
               <div>
                 <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">Nome Completo</label>
                 <div className="relative">
@@ -159,7 +165,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 {/* CPF */}
                  <div>
                     <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">CPF</label>
                     <div className="relative">
@@ -176,14 +181,12 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
                        />
                     </div>
                  </div>
-                 {/* IDADE */}
                  <div>
                     <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">Idade</label>
                     <input type="number" name="age" required value={formData.age} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border-0 focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Anos" />
                  </div>
               </div>
 
-              {/* EMPRESA */}
               <div>
                 <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">Empresa (Opcional)</label>
                 <div className="relative">
@@ -192,7 +195,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
                 </div>
               </div>
 
-               {/* EMAIL & SENHA */}
                <div>
                   <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">E-mail (Login)</label>
                   <div className="relative">

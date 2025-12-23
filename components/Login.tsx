@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Lock, Mail, Moon, Sun, Loader2 } from 'lucide-react';
+import { ChevronLeft, Lock, Mail, Moon, Sun, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { dataService } from '../services/dataService';
 import { UserProfile, AnamnesisData } from '../types';
@@ -28,19 +28,25 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
         password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+          if (authError.message.includes("Email not confirmed")) {
+              throw new Error("EMAIL_NOT_CONFIRMED");
+          }
+          if (authError.message.includes("Invalid login credentials")) {
+              throw new Error("E-mail ou senha incorretos.");
+          }
+          throw authError;
+      }
 
       if (authData.user) {
         // 1. Tentar carregar Perfil existente
         let profile = await dataService.getProfile(authData.user.id);
         
-        // 2. SELF-HEALING: Se o perfil não existir (erro no cadastro por falta de confirmação de email),
-        // tentamos recriar o perfil usando os metadados salvos no Auth.
+        // 2. SELF-HEALING: Tenta recuperar do metadata se o perfil não existir
         if (!profile && authData.user.user_metadata) {
             console.log("Perfil não encontrado. Tentando recuperar via Metadata...");
             const meta = authData.user.user_metadata;
             
-            // Só recupera se tivermos os dados mínimos
             if (meta.name && meta.cpf) {
                 const recoveredProfile: UserProfile = {
                     id: authData.user.id,
@@ -52,7 +58,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
                     age: parseInt(meta.age) || 0
                 };
                 
-                // Tenta salvar novamente
                 await dataService.saveProfile(recoveredProfile);
                 profile = recoveredProfile;
             }
@@ -60,14 +65,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
 
         if (!profile) throw new Error("Perfil não encontrado. Por favor, entre em contato com o suporte.");
 
-        // 3. Carregar Anamnese (se existir)
         const anamnesis = await dataService.getAnamnesis(authData.user.id);
-
         onLoginSuccess(profile, anamnesis);
       }
     } catch (err: any) {
       console.error(err);
-      setError("Falha no login. Verifique suas credenciais.");
+      if (err.message === "EMAIL_NOT_CONFIRMED") {
+          setError("Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada (e spam).");
+      } else {
+          setError(err.message || "Falha no login. Verifique suas credenciais.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +106,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
            </div>
 
            {error && (
-             <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-xl text-sm text-center mb-4">
-               {error}
+             <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-4 rounded-xl text-sm mb-4 border border-red-100 dark:border-red-900/50">
+               <div className="flex items-start gap-2">
+                   <AlertTriangle size={16} className="mt-0.5 shrink-0"/>
+                   <span>{error}</span>
+               </div>
              </div>
            )}
 
