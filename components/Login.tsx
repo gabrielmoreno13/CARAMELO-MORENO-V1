@@ -31,11 +31,36 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack, isDarkMode
       if (authError) throw authError;
 
       if (authData.user) {
-        // Carregar Perfil
-        const profile = await dataService.getProfile(authData.user.id);
-        if (!profile) throw new Error("Perfil não encontrado.");
+        // 1. Tentar carregar Perfil existente
+        let profile = await dataService.getProfile(authData.user.id);
+        
+        // 2. SELF-HEALING: Se o perfil não existir (erro no cadastro por falta de confirmação de email),
+        // tentamos recriar o perfil usando os metadados salvos no Auth.
+        if (!profile && authData.user.user_metadata) {
+            console.log("Perfil não encontrado. Tentando recuperar via Metadata...");
+            const meta = authData.user.user_metadata;
+            
+            // Só recupera se tivermos os dados mínimos
+            if (meta.name && meta.cpf) {
+                const recoveredProfile: UserProfile = {
+                    id: authData.user.id,
+                    name: meta.name,
+                    email: authData.user.email || '',
+                    cpf: meta.cpf,
+                    company: meta.company || '',
+                    phone: meta.phone || '',
+                    age: parseInt(meta.age) || 0
+                };
+                
+                // Tenta salvar novamente
+                await dataService.saveProfile(recoveredProfile);
+                profile = recoveredProfile;
+            }
+        }
 
-        // Carregar Anamnese (se existir)
+        if (!profile) throw new Error("Perfil não encontrado. Por favor, entre em contato com o suporte.");
+
+        // 3. Carregar Anamnese (se existir)
         const anamnesis = await dataService.getAnamnesis(authData.user.id);
 
         onLoginSuccess(profile, anamnesis);

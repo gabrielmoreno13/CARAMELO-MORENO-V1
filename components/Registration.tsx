@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { User, ChevronLeft, ShieldCheck, Moon, Sun, Lock, Briefcase, FileText, Loader2, Mail } from 'lucide-react';
+import { User, ChevronLeft, ShieldCheck, Moon, Sun, Lock, Briefcase, FileText, Loader2, Mail, CheckCircle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { dataService } from '../services/dataService';
 
@@ -24,6 +24,7 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,6 +47,7 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     // Validação básica de CPF
     if (formData.cpf.length < 14) {
@@ -56,6 +58,9 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
 
     try {
       // 1. Criar usuário no Auth do Supabase
+      // IMPORTANTE: Enviamos todos os dados para o 'data' (metadata). 
+      // Isso garante que se o perfil falhar ao salvar (por falta de confirmação de email),
+      // conseguimos recuperar esses dados no primeiro Login.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -63,20 +68,28 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
             data: {
                 name: formData.name,
                 company: formData.company,
-                cpf: formData.cpf
+                cpf: formData.cpf,
+                age: formData.age, // Adicionado
+                phone: formData.phone // Adicionado
             }
         }
       });
 
       if (authError) {
-        // Tratamento de erros comuns do Supabase
         if (authError.message === 'User already registered') throw new Error("Este e-mail já possui cadastro.");
         if (authError.message.includes('API key')) throw new Error("Erro de configuração do sistema (Chave API inválida).");
         throw authError;
       }
       
-      if (!authData.user) {
-          throw new Error("Erro ao iniciar sessão. Verifique se o cadastro foi realizado.");
+      // CASO ESPECIAL: E-mail requer confirmação
+      if (authData.user && !authData.session) {
+          setIsLoading(false);
+          setSuccessMessage("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta antes de fazer login.");
+          return;
+      }
+
+      if (!authData.user || !authData.session) {
+          throw new Error("Erro ao iniciar sessão.");
       }
 
       // 2. Montar objeto de perfil para salvar no banco de dados (tabela 'profiles')
@@ -99,9 +112,26 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
       console.error(err);
       setError(err.message || "Erro ao criar conta. Tente novamente.");
     } finally {
-      setIsLoading(false);
+      if (!successMessage) setIsLoading(false);
     }
   };
+
+  if (successMessage) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
+            <div className="bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl p-10 max-w-md w-full text-center border border-white dark:border-gray-700">
+                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:text-green-400">
+                    <CheckCircle size={40} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Quase lá!</h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-8">{successMessage}</p>
+                <button onClick={onBack} className="w-full bg-caramel-600 hover:bg-caramel-700 text-white font-bold py-3 rounded-xl transition">
+                    Voltar para Login
+                </button>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
