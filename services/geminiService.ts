@@ -1,237 +1,140 @@
-import { GoogleGenAI, Chat, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
 
-// Função robusta para capturar a API Key em diferentes ambientes
-const getApiKey = () => {
-  let key = '';
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      key = process.env.VITE_API_KEY || 
-            process.env.REACT_APP_API_KEY || 
-            process.env.NEXT_PUBLIC_API_KEY || 
-            process.env.API_KEY || '';
-    }
-  } catch (e) {}
-  if (!key) {
-    try {
-      // @ts-ignore
-      if (typeof import.meta !== 'undefined' && import.meta.env) {
-        // @ts-ignore
-        key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY || '';
-      }
-    } catch (e) {}
-  }
-  return key;
-};
+// Tenta obter a chave de forma estática para garantir compatibilidade com Netlify
+const GEMINI_API_KEY = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY;
 
-const API_KEY = getApiKey();
+// Inicialização segura
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY || '' });
 
 class GeminiService {
-  private ai: GoogleGenAI;
-  private chatSession: Chat | null = null;
-  private systemInstructionCache: string = '';
+  private chatSession: any = null;
+  private systemInstruction: string = '';
   
-  // Utilizando Gemini 3 Flash para o Chat (Inteligente e Rápido)
   private readonly CHAT_MODEL = 'gemini-3-flash-preview'; 
-  // Alterado para 2.5 Flash Latest para maior precisão em ASR (Reconhecimento de Fala)
-  private readonly TRANSCRIPTION_MODEL = 'gemini-2.5-flash-latest';
-  // Modelo específico para TTS
+  private readonly TRANSCRIPTION_MODEL = 'gemini-3-flash-preview';
   private readonly TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
-  constructor() {
-    if (!API_KEY) {
-      console.warn("⚠️ AVISO: API_KEY do Gemini não encontrada.");
+  private checkConfig() {
+    if (!GEMINI_API_KEY) {
+      console.error("❌ [Caramelo] Gemini API_KEY não encontrada. Verifique as variáveis de ambiente.");
     }
-    this.ai = new GoogleGenAI({ apiKey: API_KEY || 'dummy-key' });
-  }
-
-  public get hasApiKey(): boolean {
-    return !!API_KEY;
   }
 
   private buildSystemInstruction(user: UserProfile, anamnesis: AnamnesisData): string {
-    return `
-      PERSONA:
-      Você é o CARAMELO, uma Inteligência Artificial de suporte emocional baseada em TCC (Terapia Cognitivo-Comportamental).
-      Sua personalidade é: Calorosa, Leal (como um cão caramelo), Empática, Não-julgadora e Otimista realista.
-      
-      DIRETRIZES DE INTERAÇÃO:
-      1. **Validação:** Sempre comece validando o sentimento. "Entendo que isso doa...", "Faz sentido sentir-se assim...".
-      2. **Foco no Usuário:** Use o nome ${user.name.split(' ')[0]} ocasionalmente para criar vínculo.
-      3. **Perguntas Socráticas:** Em vez de dar conselhos diretos, faça perguntas que ajudem o usuário a chegar à conclusão.
-      4. **Segurança:** Se identificar risco de suicídio ou autolesão, seja diretivo: "Estou preocupado com você. Por favor, precisamos de ajuda humana agora" e forneça CVV (188) ou SAMU (192).
-
-      CONTEXTO DO USUÁRIO:
-      - Idade: ${user.age}
-      - Humor Recente: ${anamnesis.mood}
-      - Queixa: "${anamnesis.mainComplaint}"
-      - Objetivo: "${anamnesis.lifeGoals}"
-
-      FORMATO DE RESPOSTA:
-      - Use Markdown para estruturar (negrito para ênfase).
-      - Mantenha parágrafos curtos.
-      - Se usar Grounding (Google Search), cite a fonte naturalmente.
-    `;
+    return `Você é o CARAMELO, uma IA de suporte emocional baseada em TCC.
+    Usuário: ${user.name}, ${user.age} anos.
+    Contexto: ${anamnesis.mainComplaint}.
+    Objetivo: ${anamnesis.lifeGoals}.
+    
+    Diretrizes:
+    1. Valide sentimentos.
+    2. Seja empático e leal.
+    3. Use o nome do usuário.
+    4. Se houver risco de vida, direcione para o CVV (188).
+    5. Cite fontes de busca se usar ferramentas de pesquisa.`;
   }
 
-  public initializeChat(user: UserProfile, anamnesis: AnamnesisData, previousHistory: ChatMessage[] = []) {
-    if (!API_KEY) return;
-
-    this.systemInstructionCache = this.buildSystemInstruction(user, anamnesis);
-
-    // Mapeia histórico do app para o formato do Gemini SDK
-    const history = previousHistory.map(msg => {
-      const parts: any[] = [{ text: msg.text }];
-      if (msg.image) {
-        // Remove cabeçalho data:image se existir para o envio limpo
-        const cleanBase64 = msg.image.includes('base64,') ? msg.image.split(',')[1] : msg.image;
-        parts.push({
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: cleanBase64
-          }
-        });
-      }
-      return {
-        role: msg.role,
-        parts: parts
-      };
-    });
+  public async initializeChat(user: UserProfile, anamnesis: AnamnesisData, previousHistory: ChatMessage[] = []) {
+    this.checkConfig();
+    this.systemInstruction = this.buildSystemInstruction(user, anamnesis);
+    
+    const history = previousHistory.map(msg => ({
+      role: msg.role === 'model' ? 'model' : 'user',
+      parts: [{ text: msg.text }]
+    }));
 
     try {
-      this.chatSession = this.ai.chats.create({
+      this.chatSession = ai.models.generateContent({
         model: this.CHAT_MODEL,
-        history: history,
         config: {
-          systemInstruction: this.systemInstructionCache,
-          temperature: 0.7, // Um pouco mais criativo para empatia
-          topK: 40,
-          thinkingConfig: { thinkingBudget: 0 }, 
-          tools: [{ googleSearch: {} }], // Grounding ativado
-          // CONFIGURAÇÃO DE SEGURANÇA: Permite discussões sobre saúde mental sem bloqueios excessivos
+          systemInstruction: this.systemInstruction,
+          tools: [{ googleSearch: {} }],
+        }
+      });
+      
+      // O SDK mudou ligeiramente, para chats contínuos usamos chats.create
+      this.chatSession = ai.chats.create({
+        model: this.CHAT_MODEL,
+        config: {
+          systemInstruction: this.systemInstruction,
+          tools: [{ googleSearch: {} }],
           safetySettings: [
-            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH }
           ]
         },
+        history: history
       });
     } catch (e) {
-      console.error("Erro ao inicializar chat:", e);
+      console.error("Erro ao inicializar chat Gemini:", e);
     }
   }
 
   public async sendMessage(text: string, imageBase64?: string): Promise<{ text: string, groundingSources?: GroundingSource[] }> {
-    if (!API_KEY) return { text: "Erro: API Key não configurada." };
-    
-    // Auto-recuperação: Se a sessão for perdida (refresh), tenta recriar (sem histórico profundo, mas funcional)
-    if (!this.chatSession) {
-        console.warn("Sessão perdida. Reiniciando chat...");
-        try {
-             this.chatSession = this.ai.chats.create({
-                model: this.CHAT_MODEL,
-                config: { systemInstruction: this.systemInstructionCache || "Você é um assistente útil." }
-             });
-        } catch (e) {
-            return { text: "Erro de conexão. Por favor, recarregue a página." };
-        }
-    }
+    if (!this.chatSession) throw new Error("Chat não inicializado ou API Key ausente.");
 
-    try {
-      let result;
-      if (imageBase64) {
-        const cleanImage = imageBase64.includes('base64,') ? imageBase64.split(',')[1] : imageBase64;
-        result = await this.chatSession.sendMessage({
-          message: {
-              parts: [
-                  { text },
-                  { inlineData: { mimeType: 'image/jpeg', data: cleanImage } }
-              ]
-          }
-        });
-      } else {
-        result = await this.chatSession.sendMessage({ message: text });
-      }
-
-      const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      let groundingSources: GroundingSource[] = [];
-      
-      if (groundingChunks) {
-        groundingSources = groundingChunks
-          .map((chunk: any) => chunk.web?.uri ? { title: chunk.web.title || "Fonte Externa", uri: chunk.web.uri } : null)
-          .filter((source: any) => source !== null) as GroundingSource[];
-      }
-
-      return {
-        text: result.text || "Desculpe, tive um momento de silêncio. Pode repetir?",
-        groundingSources
+    let message: any = text;
+    if (imageBase64) {
+      message = {
+        parts: [
+          { text },
+          { inlineData: { mimeType: 'image/png', data: imageBase64 } }
+        ]
       };
-
-    } catch (error: any) {
-      console.error("Error sending message to Gemini:", error);
-      
-      if (error.message?.includes('429')) return { text: "Estou recebendo muitas mensagens agora. Respire fundo e tente em 1 minuto." };
-      if (error.message?.includes('safety')) return { text: "Sinto muito, mas não consigo processar essa mensagem devido aos meus protocolos de segurança. Podemos tentar refrasear ou falar sobre outra coisa?" };
-      
-      return { text: "Tive um pequeno problema técnico de conexão. Tente enviar novamente." };
     }
+
+    const response = await this.chatSession.sendMessage({ message });
+    
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    let groundingSources: GroundingSource[] = [];
+    
+    if (groundingChunks) {
+      groundingSources = groundingChunks
+        .map((chunk: any) => chunk.web?.uri ? { title: chunk.web.title, uri: chunk.web.uri } : null)
+        .filter((s: any) => s !== null);
+    }
+
+    return {
+      text: response.text || "...",
+      groundingSources
+    };
   }
 
   public async transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
-    if (!API_KEY) return "";
-    try {
-      const response = await this.ai.models.generateContent({
-        model: this.TRANSCRIPTION_MODEL,
-        contents: {
-          parts: [
-            { inlineData: { mimeType: mimeType, data: audioBase64 } },
-            { text: "Transcreva este áudio em Português do Brasil. Se não houver fala clara, retorne vazio." }
-          ]
-        },
-        config: { temperature: 0 }
-      });
-      return response.text?.trim() || "";
-    } catch (error) {
-      console.error("Transcription error:", error);
-      return "";
-    }
+    const response = await ai.models.generateContent({
+      model: this.TRANSCRIPTION_MODEL,
+      contents: [{
+        parts: [
+          { inlineData: { mimeType, data: audioBase64 } },
+          { text: "Transcreva este áudio exatamente como falado." }
+        ]
+      }]
+    });
+    return response.text || "";
   }
 
   public async generateSpeech(text: string): Promise<ArrayBuffer | null> {
-    if (!API_KEY) return null;
-    try {
-      const safeText = text.length > 800 ? text.substring(0, 800) + "..." : text;
-
-      const response = await this.ai.models.generateContent({
-        model: this.TTS_MODEL,
-        contents: { parts: [{ text: safeText }] },
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' } // Voz mais suave e terapêutica
-            },
-          },
-        },
-      });
-
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      
-      if (base64Audio) {
-        const binaryString = atob(base64Audio);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+    const response = await ai.models.generateContent({
+      model: this.TTS_MODEL,
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
         }
-        return bytes.buffer;
       }
-      return null;
-    } catch (error) {
-      console.error("TTS error:", error);
-      return null;
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (base64Audio) {
+      const binaryString = atob(base64Audio);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
     }
+    return null;
   }
 }
 

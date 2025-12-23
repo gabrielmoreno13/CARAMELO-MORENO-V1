@@ -50,7 +50,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const restoreSession = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            // Se o supabase for o Proxy, getSession retornará uma Promise resolvida com null, sem quebrar.
+            const sessionResponse = await supabase.auth.getSession();
+            const session = sessionResponse?.data?.session;
+
             if (session && session.user) {
                 const profile = await dataService.getProfile(session.user.id);
                 const anamnesis = await dataService.getAnamnesis(session.user.id);
@@ -64,7 +67,8 @@ const App: React.FC = () => {
                 }
             }
         } catch (e) {
-            console.error("Erro ao restaurar sessão", e);
+            // Log silencioso para não assustar o usuário se for apenas falta de config
+            console.log("Aviso: Supabase não inicializado ou sem sessão ativa.");
         } finally {
             setIsLoaded(true);
         }
