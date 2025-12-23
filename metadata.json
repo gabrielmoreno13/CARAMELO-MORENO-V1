@@ -1,6 +1,6 @@
 {
   "name": "CARAMELO v3 - Saúde Mental",
-  "description": "Assistente de saúde mental de próxima geração com Deep Thinking e Grounding em tempo real.",
+  "description": "Assistente de auto-cuidado de próxima geração com voz em tempo real e análise profunda.",
   "requestFramePermissions": [
     "camera",
     "microphone",

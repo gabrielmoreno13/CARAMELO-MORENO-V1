@@ -67,7 +67,8 @@ const App: React.FC = () => {
       {state.view === AppView.LOGIN && <Login onLoginSuccess={(u, a)=>setState(s=>({...s, user:u, anamnesis:a, view:a?AppView.CHAT:AppView.ANAMNESIS}))} onBack={()=>navigate(AppView.LANDING)} {...props} />}
       {state.view === AppView.REGISTER && <Registration onComplete={(u)=>setState(s=>({...s, user:u, view:AppView.ANAMNESIS}))} onBack={()=>navigate(AppView.LANDING)} {...props} />}
       {state.view === AppView.ANAMNESIS && state.user && <Anamnesis userName={state.user.name} onComplete={a=>{ dataService.saveAnamnesis(state.user!.id, a); setState(s=>({...s, anamnesis:a, view:AppView.CHAT})); }} {...props} />}
-      {state.view === AppView.CHAT && state.user && state.anamnesis && <ChatInterface user={state.user} anamnesis={state.anamnesis} onExit={()=>navigate(AppView.LANDING)} {...props} />}
+      {/* Fix: Passed onNavigate prop to ChatInterface to resolve TypeScript error reported on line 70 */}
+      {state.view === AppView.CHAT && state.user && state.anamnesis && <ChatInterface user={state.user} anamnesis={state.anamnesis} onExit={()=>navigate(AppView.LANDING)} onNavigate={navigate} {...props} />}
       {state.view === AppView.TOOLS && <SelfCareTools onNavigate={navigate} {...props} />}
       {state.view === AppView.OUR_APPROACH && <OurApproachPage onStart={()=>navigate(AppView.REGISTER)} onNavigate={navigate} {...props} />}
       {state.view === AppView.FOR_BUSINESS && <ForBusinessPage onStart={()=>navigate(AppView.REGISTER)} onNavigate={navigate} {...props} />}
