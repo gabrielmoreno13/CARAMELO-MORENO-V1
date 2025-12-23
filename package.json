@@ -1,9 +1,9 @@
+
 {
-  "name": "caramelo-mental-health",
-  "version": "1.0.0",
-  "description": "CARAMELO - Assistente de Saúde Mental",
+  "name": "caramelo-v3-saude-mental",
+  "version": "3.0.0",
+  "description": "Plataforma avançada de suporte emocional baseada em Gemini 3 Pro.",
   "private": true,
-  "scripts": {
-    "build": "true"
-  }
+  "author": "Caramelo AI Team",
+  "license": "MIT"
 }

@@ -1,5 +1,4 @@
 
-
 export enum AppView {
   LANDING = 'LANDING',
   LOGIN = 'LOGIN',
@@ -16,14 +15,13 @@ export enum AppView {
 export type Language = 'pt' | 'en' | 'es';
 
 export interface UserProfile {
-  id?: string;
+  id: string;
   name: string;
   email: string;
-  cpf: string;
-  company: string;
-  phone: string;
+  cpf?: string;
+  company?: string;
+  phone?: string;
   age: number;
-  avatarHue?: number;
 }
 
 export interface GroundingSource {
@@ -36,34 +34,14 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   image?: string;
-  videoUrl?: string;
-  audioUrl?: string;
   groundingSources?: GroundingSource[];
   timestamp: Date;
   isDeepAnalysis?: boolean;
 }
 
-// Added MoodEntry interface for health tracking tools
-export interface MoodEntry {
-  date: string;
-  level: number;
-}
-
-// Added GratitudeEntry interface for health tracking tools
-export interface GratitudeEntry {
-  id: string;
-  date: string;
-  text: string;
-}
-
-// Added CbtWinEntry interface for health tracking tools
-export interface CbtWinEntry {
-  id: string;
-  date: string;
-  negativeThought: string;
-  distortion: string;
-  reframe: string;
-}
+export interface MoodEntry { date: string; level: number; }
+export interface GratitudeEntry { id: string; date: string; text: string; }
+export interface CbtWinEntry { id: string; date: string; negativeThought: string; distortion: string; reframe: string; }
 
 export interface AnamnesisData {
   sleepQuality: number;
@@ -78,7 +56,6 @@ export interface AnamnesisData {
   supportNetwork: string;
   childhoodBrief: string;
   lifeGoals: string;
-  // Use specific entry types instead of any[] to resolve compilation errors
   moodHistory?: MoodEntry[];
   gratitudeLog?: GratitudeEntry[];
   cbtWins?: CbtWinEntry[];

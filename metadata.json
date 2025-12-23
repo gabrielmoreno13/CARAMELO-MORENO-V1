@@ -1,6 +1,6 @@
 {
-  "name": "CARAMELO - Assistente de Saúde Mental",
-  "description": "Um assistente de saúde mental multimodal baseado em TCC com IA profunda para ansiedade e depressão.",
+  "name": "CARAMELO v3 - Saúde Mental",
+  "description": "Assistente de saúde mental de próxima geração com Deep Thinking e Grounding em tempo real.",
   "requestFramePermissions": [
     "camera",
     "microphone",
