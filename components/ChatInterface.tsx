@@ -3,19 +3,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile, AnamnesisData, ChatMessage, Language } from '../types';
 import { geminiService } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
-import { Send, LogOut, Brain, Sparkles, Image as ImageIcon, Loader2, X, ExternalLink, ShieldCheck } from 'lucide-react';
-import { getT } from '../translations';
+import { Send, LogOut, Brain, Sparkles, Loader2, X, ExternalLink } from 'lucide-react';
 
 export const ChatInterface: React.FC<{
   user: UserProfile; anamnesis: AnamnesisData; onExit: () => void;
   isDarkMode: boolean; toggleTheme: () => void; language: Language;
-}> = ({ user, anamnesis, onExit, isDarkMode, language }) => {
+}> = ({ user, onExit }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [attachment, setAttachment] = useState<{data: string, type: string} | null>(null);
-  const t = getT(language);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
@@ -66,10 +64,10 @@ export const ChatInterface: React.FC<{
             <div className={`max-w-[85%] p-4 rounded-3xl shadow-sm ${m.role === 'user' ? 'bg-caramel-500 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-tl-none'}`}>
               {m.isDeepAnalysis && <div className="text-[10px] font-black uppercase text-caramel-600 mb-2 border-b border-caramel-100 pb-1">Thinking Mode v3</div>}
               <div className="prose dark:prose-invert text-sm"><ReactMarkdown>{m.text}</ReactMarkdown></div>
-              {m.image && <img src={m.image} className="mt-3 rounded-xl w-full" />}
+              {m.image && <img src={m.image} className="mt-3 rounded-xl w-full" alt="User upload" />}
               {m.groundingSources && (
                 <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t dark:border-gray-700">
-                  {m.groundingSources.map((s, i) => <a key={i} href={s.uri} target="_blank" className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full flex items-center gap-1 font-bold"><ExternalLink size={10}/> {s.title}</a>)}
+                  {m.groundingSources.map((s, i) => <a key={i} href={s.uri} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full flex items-center gap-1 font-bold"><ExternalLink size={10}/> {s.title}</a>)}
                 </div>
               )}
             </div>
@@ -81,7 +79,7 @@ export const ChatInterface: React.FC<{
 
       <footer className="p-4 bg-white dark:bg-gray-900 border-t dark:border-gray-800">
         <div className="max-w-4xl mx-auto flex gap-2 items-center">
-          {attachment && <div className="relative"><div className="w-12 h-12 rounded-xl border-2 border-caramel-500 overflow-hidden"><img src={`data:${attachment.type};base64,${attachment.data}`} className="object-cover h-full w-full" /></div><button onClick={()=>setAttachment(null)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>}
+          {attachment && <div className="relative"><div className="w-12 h-12 rounded-xl border-2 border-caramel-500 overflow-hidden"><img src={`data:${attachment.type};base64,${attachment.data}`} className="object-cover h-full w-full" alt="Attachment" /></div><button onClick={()=>setAttachment(null)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>}
           <div className="flex-1 relative">
             <input className="w-full bg-gray-100 dark:bg-gray-800 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Desabafe aqui..." value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter' && handleSend()} />
             <button onClick={()=>handleSend()} className="absolute right-2 top-1/2 -translate-y-1/2 bg-caramel-500 text-white p-2.5 rounded-xl shadow-lg transition active:scale-95"><Send size={18}/></button>

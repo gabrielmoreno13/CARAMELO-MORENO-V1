@@ -1,10 +1,9 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { UserProfile, ChatMessage } from "../types";
 
 class GeminiService {
   private readonly MODEL_PRO = 'gemini-3-pro-preview';
-  private readonly MODEL_FLASH = 'gemini-3-flash-preview';
   private readonly MODEL_FLASH_GROUNDING = 'gemini-2.5-flash';
   private readonly MODEL_VEO = 'veo-3.1-fast-generate-preview';
 
@@ -14,7 +13,7 @@ class GeminiService {
 
   public async getDeepResponse(prompt: string, user: UserProfile, history: ChatMessage[]) {
     const ai = this.getAI();
-    const contents = history.slice(-10).map(m => ({
+    const contents: any[] = history.slice(-10).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text }]
     }));

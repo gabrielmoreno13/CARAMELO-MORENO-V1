@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppState, AppView, UserProfile, AnamnesisData, Language } from './types';
+import { AppState, AppView, UserProfile, Language } from './types';
 import { LandingPage } from './components/LandingPage';
 import { Registration } from './components/Registration';
 import { Login } from './components/Login';
@@ -10,7 +10,6 @@ import { SelfCareTools } from './components/SelfCareTools';
 import { OurApproachPage, ForBusinessPage, ProfessionalHelpPage, AboutUsPage } from './components/ExtraPages';
 import { supabase } from './services/supabaseClient';
 import { dataService } from './services/dataService';
-import { Loader2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
