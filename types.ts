@@ -1,3 +1,4 @@
+
 export enum AppView {
   LANDING = 'LANDING',
   LOGIN = 'LOGIN',
@@ -11,6 +12,8 @@ export enum AppView {
   ABOUT_US = 'ABOUT_US'
 }
 
+export type Language = 'pt' | 'en' | 'es';
+
 export interface UserProfile {
   id?: string;
   name: string;
@@ -19,12 +22,12 @@ export interface UserProfile {
   company: string;
   phone: string;
   age: number;
-  avatarHue?: number; // Para personalização do Caramelo (0-360)
+  avatarHue?: number;
 }
 
 export interface MoodEntry {
-  date: string; // ISO Date
-  level: number; // 1-5 (1: Péssimo, 5: Ótimo)
+  date: string;
+  level: number;
   note?: string;
 }
 
@@ -43,32 +46,23 @@ export interface CbtWinEntry {
 }
 
 export interface DailyIntention {
-  date: string; // YYYY-MM-DD
+  date: string;
   text: string;
 }
 
 export interface AnamnesisData {
-  // Estado Atual
   sleepQuality: number;
   anxietyLevel: number;
   mood: string;
   mainComplaint: string;
-
-  // Aspectos Biológicos/Rotina
   medication: string;
   physicalActivity: string;
   appetite: string;
-
-  // Histórico e Contexto Social
   previousTherapy: boolean;
   familyHistory: string;
   supportNetwork: string;
-  
-  // Aspectos Psicanalíticos/Profundos
   childhoodBrief: string;
   lifeGoals: string;
-
-  // NOVOS CAMPOS (WOEBOT FEATURES)
   moodHistory?: MoodEntry[];
   gratitudeLog?: GratitudeEntry[];
   cbtWins?: CbtWinEntry[];
@@ -94,4 +88,5 @@ export interface AppState {
   view: AppView;
   user: UserProfile | null;
   anamnesis: AnamnesisData | null;
+  language: Language;
 }
