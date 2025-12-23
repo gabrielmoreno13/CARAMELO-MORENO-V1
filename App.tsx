@@ -9,8 +9,8 @@ import { SelfCareTools } from './components/SelfCareTools';
 import { OurApproachPage, ForBusinessPage, ProfessionalHelpPage, AboutUsPage } from './components/ExtraPages';
 import { supabase } from './services/supabaseClient';
 import { dataService } from './services/dataService';
+import { Loader2 } from 'lucide-react';
 
-const STORAGE_KEY = 'caramelo_app_state_v1';
 const THEME_KEY = 'caramelo_theme';
 
 const App: React.FC = () => {
@@ -49,9 +49,9 @@ const App: React.FC = () => {
   // Tenta restaurar sessão do Supabase ao iniciar
   useEffect(() => {
     const restoreSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && session.user) {
-            try {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && session.user) {
                 const profile = await dataService.getProfile(session.user.id);
                 const anamnesis = await dataService.getAnamnesis(session.user.id);
                 if (profile) {
@@ -62,15 +62,15 @@ const App: React.FC = () => {
                         view: anamnesis ? AppView.CHAT : AppView.ANAMNESIS
                     }));
                 }
-            } catch (e) {
-                console.error("Erro ao restaurar sessão", e);
             }
+        } catch (e) {
+            console.error("Erro ao restaurar sessão", e);
+        } finally {
+            setIsLoaded(true);
         }
-        setIsLoaded(true);
     };
     restoreSession();
   }, []);
-
 
   const navigate = (view: AppView) => {
     setState(prev => ({ ...prev, view }));
@@ -108,7 +108,14 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, view: AppView.LANDING, anamnesis: null, user: null }));
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded) {
+      return (
+          <div className="min-h-screen bg-caramel-50 dark:bg-gray-900 flex flex-col items-center justify-center transition-colors">
+              <Loader2 className="animate-spin text-caramel-600 mb-4" size={48} />
+              <p className="text-gray-500 font-medium">Carregando Caramelo...</p>
+          </div>
+      );
+  }
 
   const commonProps = { isDarkMode, toggleTheme };
 

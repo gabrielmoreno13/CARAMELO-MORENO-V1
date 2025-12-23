@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, Modality } from "@google/genai";
+import { GoogleGenAI, Chat, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
 
 // Função robusta para capturar a API Key em diferentes ambientes
@@ -52,29 +52,25 @@ class GeminiService {
   private buildSystemInstruction(user: UserProfile, anamnesis: AnamnesisData): string {
     return `
       PERSONA:
-      Você é o CARAMELO, uma Inteligência Artificial de suporte emocional, calorosa, empática e leal.
-      Seu nome vem do "vira-lata caramelo", símbolo brasileiro de amizade e resiliência.
+      Você é o CARAMELO, uma Inteligência Artificial de suporte emocional baseada em TCC (Terapia Cognitivo-Comportamental).
+      Sua personalidade é: Calorosa, Leal (como um cão caramelo), Empática, Não-julgadora e Otimista realista.
       
-      IDIOMA: 
-      Português do Brasil (PT-BR).
-
-      DIRETRIZES DE ÁUDIO E PROSÓDIA (CRUCIAL):
-      1. **Velocidade:** Fale devagar. Use um ritmo pausado e tranquilo.
-      2. **Tom:** Use um tom suave, doce e acolhedor. Evite soar robótico ou professoral.
-      3. **Respiração:** Use pontuação (...) para simular pausas de reflexão.
-      4. **Extensão:** Seja conciso. Respostas curtas (2 a 3 frases) são ideais para chat por voz.
-      5. **Empatia:** Valide os sentimentos do usuário ("Sinto muito que esteja passando por isso", "Faz sentido você se sentir assim") antes de sugerir soluções.
+      DIRETRIZES DE INTERAÇÃO:
+      1. **Validação:** Sempre comece validando o sentimento. "Entendo que isso doa...", "Faz sentido sentir-se assim...".
+      2. **Foco no Usuário:** Use o nome ${user.name.split(' ')[0]} ocasionalmente para criar vínculo.
+      3. **Perguntas Socráticas:** Em vez de dar conselhos diretos, faça perguntas que ajudem o usuário a chegar à conclusão.
+      4. **Segurança:** Se identificar risco de suicídio ou autolesão, seja diretivo: "Estou preocupado com você. Por favor, precisamos de ajuda humana agora" e forneça CVV (188) ou SAMU (192).
 
       CONTEXTO DO USUÁRIO:
-      - Nome: ${user.name.split(' ')[0]}
       - Idade: ${user.age}
-      - Humor Atual: ${anamnesis.mood}
-      - Queixa Principal: "${anamnesis.mainComplaint}"
+      - Humor Recente: ${anamnesis.mood}
+      - Queixa: "${anamnesis.mainComplaint}"
       - Objetivo: "${anamnesis.lifeGoals}"
 
-      SEGURANÇA:
-      Se detectar risco iminente de vida (suicídio/autolesão), mude para um tom firme mas acolhedor e indique o CVV (188) ou emergência (192).
-      Nunca prescreva medicamentos.
+      FORMATO DE RESPOSTA:
+      - Use Markdown para estruturar (negrito para ênfase).
+      - Mantenha parágrafos curtos.
+      - Se usar Grounding (Google Search), cite a fonte naturalmente.
     `;
   }
 
@@ -108,10 +104,17 @@ class GeminiService {
         history: history,
         config: {
           systemInstruction: this.systemInstructionCache,
-          temperature: 0.6, 
+          temperature: 0.7, // Um pouco mais criativo para empatia
           topK: 40,
           thinkingConfig: { thinkingBudget: 0 }, 
-          tools: [{ googleSearch: {} }] // Grounding ativado para informações atuais
+          tools: [{ googleSearch: {} }], // Grounding ativado
+          // CONFIGURAÇÃO DE SEGURANÇA: Permite discussões sobre saúde mental sem bloqueios excessivos
+          safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+          ]
         },
       });
     } catch (e) {
@@ -156,7 +159,7 @@ class GeminiService {
       
       if (groundingChunks) {
         groundingSources = groundingChunks
-          .map((chunk: any) => chunk.web?.uri ? { title: chunk.web.title || "Fonte", uri: chunk.web.uri } : null)
+          .map((chunk: any) => chunk.web?.uri ? { title: chunk.web.title || "Fonte Externa", uri: chunk.web.uri } : null)
           .filter((source: any) => source !== null) as GroundingSource[];
       }
 
@@ -168,11 +171,10 @@ class GeminiService {
     } catch (error: any) {
       console.error("Error sending message to Gemini:", error);
       
-      // Tratamento amigável de erros comuns
-      if (error.message?.includes('429')) return { text: "Estou recebendo muitas mensagens agora. Pode esperar um minutinho?" };
-      if (error.message?.includes('safety')) return { text: "Não consigo processar essa mensagem devido aos meus filtros de segurança. Podemos falar sobre outra coisa?" };
+      if (error.message?.includes('429')) return { text: "Estou recebendo muitas mensagens agora. Respire fundo e tente em 1 minuto." };
+      if (error.message?.includes('safety')) return { text: "Sinto muito, mas não consigo processar essa mensagem devido aos meus protocolos de segurança. Podemos tentar refrasear ou falar sobre outra coisa?" };
       
-      return { text: "Tive um pequeno problema técnico. Tente novamente." };
+      return { text: "Tive um pequeno problema técnico de conexão. Tente enviar novamente." };
     }
   }
 
@@ -184,22 +186,10 @@ class GeminiService {
         contents: {
           parts: [
             { inlineData: { mimeType: mimeType, data: audioBase64 } },
-            { text: `
-              ATENÇÃO: Você é um sistema ASR (Automatic Speech Recognition) profissional.
-              CONTEXTO: O usuário está falando com um assistente de saúde mental.
-              TAREFA: Transcreva o áudio em Português do Brasil.
-              REGRAS:
-              1. Transcrição LITERAL e EXATA.
-              2. Se o áudio for silêncio ou ruído, retorne string vazia.
-              3. Não adicione pontuação excessiva se não houver pausas.
-              4. Não invente palavras para preencher lacunas.
-            ` }
+            { text: "Transcreva este áudio em Português do Brasil. Se não houver fala clara, retorne vazio." }
           ]
         },
-        config: {
-            temperature: 0, // Temperatura 0 para eliminar alucinações
-            maxOutputTokens: 1000
-        }
+        config: { temperature: 0 }
       });
       return response.text?.trim() || "";
     } catch (error) {
@@ -211,8 +201,7 @@ class GeminiService {
   public async generateSpeech(text: string): Promise<ArrayBuffer | null> {
     if (!API_KEY) return null;
     try {
-      // Limita o texto para evitar estourar cotas de TTS em mensagens muito longas
-      const safeText = text.length > 500 ? text.substring(0, 500) + "..." : text;
+      const safeText = text.length > 800 ? text.substring(0, 800) + "..." : text;
 
       const response = await this.ai.models.generateContent({
         model: this.TTS_MODEL,
@@ -221,7 +210,7 @@ class GeminiService {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' } // Voz feminina, calma
+              prebuiltVoiceConfig: { voiceName: 'Kore' } // Voz mais suave e terapêutica
             },
           },
         },

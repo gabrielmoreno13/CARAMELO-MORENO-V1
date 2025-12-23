@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnamnesisData } from '../types';
-import { ArrowRight, ArrowLeft, Heart, Zap, Moon, Frown, Smile, Meh, AlertCircle, Activity, Sun, SkipForward } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Heart, Zap, Moon, Frown, Smile, Meh, AlertCircle, Activity, Sun, Save } from 'lucide-react';
 
 interface AnamnesisProps {
   userName: string;
@@ -26,6 +26,25 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
     childhoodBrief: '',
     lifeGoals: ''
   });
+  
+  // Rascunho Automático: Carregar
+  useEffect(() => {
+      const saved = localStorage.getItem('caramelo_anamnesis_draft');
+      if (saved) {
+          try {
+              const parsed = JSON.parse(saved);
+              // Verifica se o rascunho tem pelo menos alguns campos válidos
+              if (parsed.mood || parsed.mainComplaint) {
+                  setData(prev => ({ ...prev, ...parsed }));
+              }
+          } catch (e) {}
+      }
+  }, []);
+
+  // Rascunho Automático: Salvar a cada mudança
+  useEffect(() => {
+      localStorage.setItem('caramelo_anamnesis_draft', JSON.stringify(data));
+  }, [data]);
 
   const handleChange = (field: keyof AnamnesisData, value: any) => {
     setData(prev => ({ ...prev, [field]: value }));
@@ -33,14 +52,17 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
 
   const nextStep = () => {
       if(step < totalSteps) setStep(s => s + 1);
-      else onComplete(data);
+      else {
+          // Limpa rascunho ao finalizar
+          localStorage.removeItem('caramelo_anamnesis_draft');
+          onComplete(data);
+      }
   };
   
   const prevStep = () => setStep(s => s - 1);
 
   const progress = (step / totalSteps) * 100;
 
-  // Componente auxiliar para Botões de Seleção (estilo Wysa)
   const SelectionCard = ({ label, icon: Icon, selected, onClick }: any) => (
       <button 
         onClick={onClick}
@@ -56,7 +78,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
 
   const renderStep = () => {
     switch (step) {
-      case 1: // Humor e Queixa
+      case 1: 
         return (
           <div className="animate-fade-in space-y-8">
             <div className="text-center space-y-2">
@@ -84,7 +106,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
             </div>
           </div>
         );
-      case 2: // Sliders (Ansiedade/Sono)
+      case 2: 
         return (
           <div className="animate-fade-in space-y-8">
              <div className="text-center space-y-2">
@@ -99,10 +121,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
                         <span className="text-2xl font-bold text-caramel-600 dark:text-caramel-400">{data.anxietyLevel}</span>
                     </div>
                     <input type="range" min="1" max="10" value={data.anxietyLevel} onChange={(e) => handleChange('anxietyLevel', parseInt(e.target.value))} className="w-full accent-caramel-600 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"/>
-                    <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        <span>Calmo</span>
-                        <span>Muito Ansioso</span>
-                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2"><span>Calmo</span><span>Muito Ansioso</span></div>
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-6 rounded-2xl shadow-sm">
@@ -111,154 +130,113 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
                         <span className="text-2xl font-bold text-caramel-600 dark:text-caramel-400">{data.sleepQuality}</span>
                     </div>
                     <input type="range" min="1" max="10" value={data.sleepQuality} onChange={(e) => handleChange('sleepQuality', parseInt(e.target.value))} className="w-full accent-caramel-600 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"/>
-                    <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        <span>Péssimo</span>
-                        <span>Excelente</span>
-                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2"><span>Péssimo</span><span>Excelente</span></div>
                 </div>
              </div>
-             
              <div className="space-y-2">
                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Toma alguma medicação?</label>
-                 <input type="text" className="w-full p-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-800 dark:text-white" placeholder="Se sim, qual?" value={data.medication} onChange={(e) => handleChange('medication', e.target.value)} />
+                 <input type="text" className="w-full p-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 dark:text-white" placeholder="Se sim, qual?" value={data.medication} onChange={(e) => handleChange('medication', e.target.value)} />
              </div>
           </div>
         );
-      case 3: // Rotina (Botões)
+      case 3: 
         return (
           <div className="animate-fade-in space-y-8">
              <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Sua Rotina</h3>
                 <p className="text-gray-500 dark:text-gray-400">Para entendermos seu corpo e mente.</p>
              </div>
-
              <div>
                  <p className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 text-center">Atividade Física</p>
                  <div className="grid grid-cols-1 gap-3">
                      {['Sedentário', 'Leve (1-2x)', 'Moderado (3-4x)', 'Intenso (5+)'].map(opt => (
-                         <button 
-                            key={opt}
-                            onClick={() => handleChange('physicalActivity', opt)}
-                            className={`p-4 rounded-xl border text-left font-medium transition-all ${data.physicalActivity === opt ? 'bg-caramel-50 dark:bg-caramel-900/50 border-caramel-500 text-caramel-900 dark:text-caramel-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}
-                         >
-                             {opt}
-                         </button>
+                         <button key={opt} onClick={() => handleChange('physicalActivity', opt)} className={`p-4 rounded-xl border text-left font-medium transition-all ${data.physicalActivity === opt ? 'bg-caramel-50 dark:bg-caramel-900/50 border-caramel-500 text-caramel-900 dark:text-caramel-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}>{opt}</button>
                      ))}
                  </div>
              </div>
-             
              <div>
                  <p className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 text-center">Apetite</p>
                  <div className="flex gap-2">
                      {['Diminuído', 'Normal', 'Aumentado'].map(opt => (
-                         <button 
-                            key={opt}
-                            onClick={() => handleChange('appetite', opt)}
-                            className={`flex-1 p-3 rounded-xl border text-center text-sm font-medium transition-all ${data.appetite === opt ? 'bg-caramel-50 dark:bg-caramel-900/50 border-caramel-500 text-caramel-900 dark:text-caramel-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}
-                         >
-                             {opt}
-                         </button>
+                         <button key={opt} onClick={() => handleChange('appetite', opt)} className={`flex-1 p-3 rounded-xl border text-center text-sm font-medium transition-all ${data.appetite === opt ? 'bg-caramel-50 dark:bg-caramel-900/50 border-caramel-500 text-caramel-900 dark:text-caramel-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}>{opt}</button>
                      ))}
                  </div>
              </div>
           </div>
         );
-      case 4: // Histórico
+      case 4: 
         return (
           <div className="animate-fade-in space-y-6">
              <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Um pouco de história</h3>
                 <p className="text-gray-500 dark:text-gray-400">Estas perguntas são opcionais, mas ajudam muito.</p>
              </div>
-             
              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
                  <div className="flex items-center gap-3">
                     <input type="checkbox" checked={data.previousTherapy} onChange={(e) => handleChange('previousTherapy', e.target.checked)} className="w-6 h-6 text-caramel-600 rounded focus:ring-caramel-500" />
                     <span className="text-gray-700 dark:text-gray-300 font-medium text-lg">Já fiz terapia antes</span>
                  </div>
-                 
                  <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Histórico Familiar</label>
-                    <textarea className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Histórico de saúde mental na família..." value={data.familyHistory} onChange={(e) => handleChange('familyHistory', e.target.value)} />
+                    <textarea className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 dark:text-white" placeholder="Histórico de saúde mental na família..." value={data.familyHistory} onChange={(e) => handleChange('familyHistory', e.target.value)} />
                  </div>
-                 
                  <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Rede de Apoio</label>
-                    <input type="text" className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Quem te apoia? (Família, Amigos)" value={data.supportNetwork} onChange={(e) => handleChange('supportNetwork', e.target.value)} />
+                    <input type="text" className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 dark:text-white" placeholder="Quem te apoia? (Família, Amigos)" value={data.supportNetwork} onChange={(e) => handleChange('supportNetwork', e.target.value)} />
                  </div>
              </div>
           </div>
         );
-        case 5: // Profundo / Objetivos
+        case 5:
         return (
           <div className="animate-fade-in space-y-6">
              <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Último passo</h3>
                 <p className="text-gray-500 dark:text-gray-400">O que você busca com o Caramelo?</p>
              </div>
-
              <div className="space-y-4">
                 <div>
-                   <div className="flex justify-between items-center mb-2">
-                     <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Resumo da Infância</label>
-                     <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Opcional</span>
-                   </div>
-                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Se quiser, compartilhe algo marcante..." value={data.childhoodBrief} onChange={(e) => handleChange('childhoodBrief', e.target.value)} />
+                   <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Resumo da Infância <span className="text-xs text-gray-400 font-normal">(Opcional)</span></label>
+                   <textarea className="w-full p-4 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Se quiser, compartilhe algo marcante..." value={data.childhoodBrief} onChange={(e) => handleChange('childhoodBrief', e.target.value)} />
                 </div>
-                
                 <div>
                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Seu Objetivo Principal</label>
-                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Ex: Dormir melhor, controlar ansiedade, desabafar..." value={data.lifeGoals} onChange={(e) => handleChange('lifeGoals', e.target.value)} />
+                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Ex: Dormir melhor, controlar ansiedade, desabafar..." value={data.lifeGoals} onChange={(e) => handleChange('lifeGoals', e.target.value)} />
                 </div>
              </div>
           </div>
         );
-      default:
-        return null;
+      default: return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 transition-colors duration-300">
-       <div className="w-full max-w-xl flex flex-col h-[85vh] md:h-auto md:min-h-[600px] bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl overflow-hidden relative transition-colors border border-white dark:border-gray-700">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+       <div className="w-full max-w-xl flex flex-col h-[85vh] md:h-auto md:min-h-[600px] bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl overflow-hidden relative border border-white dark:border-gray-700">
+         <div className="w-full h-2 bg-gray-100 dark:bg-gray-700"><div className="h-full bg-caramel-500 transition-all duration-500" style={{ width: `${progress}%` }}></div></div>
          
-         {/* Progress Bar */}
-         <div className="w-full h-2 bg-gray-100 dark:bg-gray-700">
-            <div className="h-full bg-caramel-500 transition-all duration-500" style={{ width: `${progress}%` }}></div>
-         </div>
-         
-         {/* Header */}
          <div className="px-8 pt-6 pb-2 flex justify-between items-center">
-            {step > 1 ? (
-                <button onClick={prevStep} className="text-gray-400 hover:text-caramel-600"><ArrowLeft size={24}/></button>
-            ) : <div className="w-6"></div>}
-            
+            {step > 1 ? <button onClick={prevStep} className="text-gray-400 hover:text-caramel-600"><ArrowLeft size={24}/></button> : <div className="w-6"></div>}
             <div className="flex items-center gap-4">
                <span className="font-bold text-gray-300 dark:text-gray-500 text-sm tracking-widest">ETAPA {step}/{totalSteps}</span>
-               <button 
-                onClick={toggleTheme}
-                className="p-1 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                 {isDarkMode ? <Sun size={16}/> : <Moon size={16}/>}
-              </button>
+               <button onClick={toggleTheme} className="p-1 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">{isDarkMode ? <Sun size={16}/> : <Moon size={16}/>}</button>
             </div>
-            
             <div className="w-6"></div>
          </div>
          
-         {/* Content Scrollable */}
-         <div className="flex-1 overflow-y-auto px-8 py-4">
-            {renderStep()}
-         </div>
+         <div className="flex-1 overflow-y-auto px-8 py-4">{renderStep()}</div>
 
-         {/* Footer Action */}
          <div className="p-8 border-t border-gray-50 dark:border-gray-700 bg-white dark:bg-gray-800">
+             {/* Rascunho Info */}
+            <div className="flex justify-end mb-2">
+                 <span className="text-[10px] text-gray-400 flex items-center gap-1"><Save size={10}/> Rascunho salvo</span>
+            </div>
             <button 
                 onClick={nextStep}
                 disabled={step === 1 && !data.mood}
-                className="w-full bg-caramel-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-caramel-200 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-caramel-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-caramel-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-                {step === totalSteps ? 'Finalizar e Conversar' : (step >= 4 ? 'Continuar / Pular' : 'Continuar')} <ArrowRight size={20} />
+                {step === totalSteps ? 'Finalizar e Conversar' : 'Continuar'} <ArrowRight size={20} />
             </button>
          </div>
        </div>
