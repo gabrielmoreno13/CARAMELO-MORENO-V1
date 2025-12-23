@@ -4,7 +4,6 @@ import { UserProfile, AnamnesisData, ChatMessage } from '../types';
 export const dataService = {
   // --- PERFIL ---
   async saveProfile(user: UserProfile) {
-    // O ID deve vir do Auth do Supabase
     const { error } = await supabase
       .from('profiles')
       .upsert({
@@ -14,7 +13,9 @@ export const dataService = {
         cpf: user.cpf,
         company: user.company,
         phone: user.phone,
-        age: user.age
+        age: user.age,
+        avatar_hue: user.avatarHue || 0, // Mapeia camelCase para snake_case
+        updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
     
     if (error) {
@@ -34,21 +35,34 @@ export const dataService = {
         console.log("Perfil não encontrado ou erro:", error.message);
         return null;
     }
-    return data as UserProfile;
+
+    // Mapeia snake_case do banco de volta para camelCase do Frontend
+    return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        cpf: data.cpf,
+        company: data.company,
+        phone: data.phone,
+        age: data.age,
+        avatarHue: data.avatar_hue
+    } as UserProfile;
   },
 
-  // --- ANAMNESE ---
+  // --- ANAMNESE E HISTÓRICO COMPLETO ---
   async saveAnamnesis(userId: string, data: AnamnesisData) {
+    // O campo 'data' no banco é do tipo JSONB.
+    // Ele armazena toda a estrutura complexa (arrays de humor, gratidão, etc) automaticamente.
     const { error } = await supabase
       .from('anamnesis')
       .upsert({
         user_id: userId,
-        data: data, // Salvamos o objeto inteiro como JSONB
+        data: data, 
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
     
     if (error) {
-        console.error("Erro ao salvar anamnese:", error);
+        console.error("Erro ao salvar dados de saúde:", error);
         throw error;
     }
   },
@@ -58,19 +72,20 @@ export const dataService = {
       .from('anamnesis')
       .select('data')
       .eq('user_id', userId)
-      .maybeSingle(); // maybeSingle evita erro 406 se não existir
+      .maybeSingle();
 
     if (error) {
-        console.error("Erro ao buscar anamnese:", error);
+        console.error("Erro ao buscar dados de saúde:", error);
         return null;
     }
     if (!data) return null;
+    
+    // Retorna o objeto JSON puro
     return data.data as AnamnesisData;
   },
 
   // --- CHAT ---
   async saveMessage(userId: string, message: ChatMessage) {
-    // Convertemos a data para string ISO segura para o Postgres
     const timestamp = message.timestamp instanceof Date 
         ? message.timestamp.toISOString() 
         : new Date().toISOString();
@@ -92,7 +107,8 @@ export const dataService = {
       .from('chat_history')
       .select('*')
       .eq('user_id', userId)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(50); // Limita para não carregar histórico infinito de uma vez
 
     if (error) {
         console.error("Erro ao recuperar histórico:", error);
@@ -101,7 +117,7 @@ export const dataService = {
     if (!data) return [];
 
     return data.map((item: any) => ({
-      id: item.id,
+      id: item.id.toString(),
       role: item.role as 'user' | 'model',
       text: item.text,
       timestamp: new Date(item.timestamp)

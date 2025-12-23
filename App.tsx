@@ -5,6 +5,7 @@ import { Registration } from './components/Registration';
 import { Login } from './components/Login';
 import { Anamnesis } from './components/Anamnesis';
 import { ChatInterface } from './components/ChatInterface';
+import { SelfCareTools } from './components/SelfCareTools';
 import { OurApproachPage, ForBusinessPage, ProfessionalHelpPage, AboutUsPage } from './components/ExtraPages';
 import { supabase } from './services/supabaseClient';
 import { dataService } from './services/dataService';
@@ -100,7 +101,7 @@ const App: React.FC = () => {
   };
 
   const goBackToLanding = async () => {
-    if (state.view === AppView.CHAT) {
+    if (state.view === AppView.CHAT || state.view === AppView.TOOLS) {
         if (!window.confirm("Deseja sair da sua conta?")) return;
         await supabase.auth.signOut();
     }
@@ -158,8 +159,16 @@ const App: React.FC = () => {
           user={state.user} 
           anamnesis={state.anamnesis} 
           onExit={goBackToLanding}
+          onOpenTools={() => navigate(AppView.TOOLS)}
           {...commonProps}
         />
+      )}
+
+      {state.view === AppView.TOOLS && (
+         <SelfCareTools 
+            onNavigate={navigate}
+            {...commonProps}
+         />
       )}
     </main>
   );

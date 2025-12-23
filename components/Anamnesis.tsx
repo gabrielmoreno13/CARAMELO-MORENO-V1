@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnamnesisData } from '../types';
-import { ArrowRight, ArrowLeft, Heart, Zap, Moon, Frown, Smile, Meh, AlertCircle, Activity, Sun } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Heart, Zap, Moon, Frown, Smile, Meh, AlertCircle, Activity, Sun, SkipForward } from 'lucide-react';
 
 interface AnamnesisProps {
   userName: string;
@@ -60,8 +60,8 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
         return (
           <div className="animate-fade-in space-y-8">
             <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Como você está se sentindo hoje?</h3>
-                <p className="text-gray-500 dark:text-gray-400">Selecione o que melhor descreve seu momento.</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Olá, {userName.split(' ')[0]}! Como você está hoje?</h3>
+                <p className="text-gray-500 dark:text-gray-400">Selecione o que melhor descreve seu momento atual.</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -129,6 +129,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
           <div className="animate-fade-in space-y-8">
              <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Sua Rotina</h3>
+                <p className="text-gray-500 dark:text-gray-400">Para entendermos seu corpo e mente.</p>
              </div>
 
              <div>
@@ -162,12 +163,12 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
              </div>
           </div>
         );
-      case 4: // Histórico (Texto mais clean)
+      case 4: // Histórico
         return (
           <div className="animate-fade-in space-y-6">
              <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Um pouco de história</h3>
-                <p className="text-gray-500 dark:text-gray-400">Para te conhecer além do momento atual.</p>
+                <p className="text-gray-500 dark:text-gray-400">Estas perguntas são opcionais, mas ajudam muito.</p>
              </div>
              
              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
@@ -183,7 +184,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
                  
                  <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Rede de Apoio</label>
-                    <input type="text" className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Quem te apoia?" value={data.supportNetwork} onChange={(e) => handleChange('supportNetwork', e.target.value)} />
+                    <input type="text" className="w-full p-4 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-caramel-200 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Quem te apoia? (Família, Amigos)" value={data.supportNetwork} onChange={(e) => handleChange('supportNetwork', e.target.value)} />
                  </div>
              </div>
           </div>
@@ -198,13 +199,16 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
 
              <div className="space-y-4">
                 <div>
-                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Resumo da Infância (Opcional)</label>
-                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Algo marcante que devemos saber..." value={data.childhoodBrief} onChange={(e) => handleChange('childhoodBrief', e.target.value)} />
+                   <div className="flex justify-between items-center mb-2">
+                     <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Resumo da Infância</label>
+                     <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Opcional</span>
+                   </div>
+                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Se quiser, compartilhe algo marcante..." value={data.childhoodBrief} onChange={(e) => handleChange('childhoodBrief', e.target.value)} />
                 </div>
                 
                 <div>
                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Seu Objetivo Principal</label>
-                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Ex: Dormir melhor, controlar ansiedade..." value={data.lifeGoals} onChange={(e) => handleChange('lifeGoals', e.target.value)} />
+                   <textarea className="w-full p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-caramel-500 text-gray-800 dark:text-white placeholder-gray-400" placeholder="Ex: Dormir melhor, controlar ansiedade, desabafar..." value={data.lifeGoals} onChange={(e) => handleChange('lifeGoals', e.target.value)} />
                 </div>
              </div>
           </div>
@@ -216,7 +220,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 transition-colors duration-300">
-       <div className="w-full max-w-xl flex flex-col h-[85vh] md:h-auto md:min-h-[600px] bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl overflow-hidden relative transition-colors">
+       <div className="w-full max-w-xl flex flex-col h-[85vh] md:h-auto md:min-h-[600px] bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl overflow-hidden relative transition-colors border border-white dark:border-gray-700">
          
          {/* Progress Bar */}
          <div className="w-full h-2 bg-gray-100 dark:bg-gray-700">
@@ -254,7 +258,7 @@ export const Anamnesis: React.FC<AnamnesisProps> = ({ userName, onComplete, isDa
                 disabled={step === 1 && !data.mood}
                 className="w-full bg-caramel-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-caramel-200 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-                {step === totalSteps ? 'Finalizar e Conversar' : 'Continuar'} <ArrowRight size={20} />
+                {step === totalSteps ? 'Finalizar e Conversar' : (step >= 4 ? 'Continuar / Pular' : 'Continuar')} <ArrowRight size={20} />
             </button>
          </div>
        </div>

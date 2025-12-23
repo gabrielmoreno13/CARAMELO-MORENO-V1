@@ -1,10 +1,10 @@
 export enum AppView {
   LANDING = 'LANDING',
-  LOGIN = 'LOGIN', // Nova tela
+  LOGIN = 'LOGIN',
   REGISTER = 'REGISTER',
   ANAMNESIS = 'ANAMNESIS',
   CHAT = 'CHAT',
-  // Novas Páginas Institucionais
+  TOOLS = 'TOOLS',
   OUR_APPROACH = 'OUR_APPROACH',
   FOR_BUSINESS = 'FOR_BUSINESS',
   PROFESSIONAL_HELP = 'PROFESSIONAL_HELP',
@@ -12,35 +12,67 @@ export enum AppView {
 }
 
 export interface UserProfile {
-  id?: string; // ID do Supabase Auth
+  id?: string;
   name: string;
   email: string;
-  cpf: string; // Novo campo
-  company: string; // Novo campo
+  cpf: string;
+  company: string;
   phone: string;
   age: number;
+  avatarHue?: number; // Para personalização do Caramelo (0-360)
+}
+
+export interface MoodEntry {
+  date: string; // ISO Date
+  level: number; // 1-5 (1: Péssimo, 5: Ótimo)
+  note?: string;
+}
+
+export interface GratitudeEntry {
+  id: string;
+  date: string;
+  text: string;
+}
+
+export interface CbtWinEntry {
+  id: string;
+  date: string;
+  negativeThought: string;
+  distortion: string;
+  reframe: string;
+}
+
+export interface DailyIntention {
+  date: string; // YYYY-MM-DD
+  text: string;
 }
 
 export interface AnamnesisData {
   // Estado Atual
-  sleepQuality: number; // 1-10
-  anxietyLevel: number; // 1-10
-  mood: string; // Descritivo
+  sleepQuality: number;
+  anxietyLevel: number;
+  mood: string;
   mainComplaint: string;
 
   // Aspectos Biológicos/Rotina
   medication: string;
-  physicalActivity: string; // Sedentário, Moderado, Ativo
-  appetite: string; // Aumentado, Diminuído, Normal
+  physicalActivity: string;
+  appetite: string;
 
   // Histórico e Contexto Social
   previousTherapy: boolean;
-  familyHistory: string; // Histórico de doenças mentais na família
-  supportNetwork: string; // Quem são as pessoas de apoio
+  familyHistory: string;
+  supportNetwork: string;
   
   // Aspectos Psicanalíticos/Profundos
-  childhoodBrief: string; // Breve relato marcante da infância
-  lifeGoals: string; // Objetivos de vida ou o que espera do tratamento
+  childhoodBrief: string;
+  lifeGoals: string;
+
+  // NOVOS CAMPOS (WOEBOT FEATURES)
+  moodHistory?: MoodEntry[];
+  gratitudeLog?: GratitudeEntry[];
+  cbtWins?: CbtWinEntry[];
+  dailyIntentions?: DailyIntention[];
 }
 
 export interface GroundingSource {
@@ -52,8 +84,8 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
-  image?: string; // Base64 image
-  audioUrl?: string; // Blob URL for TTS audio
+  image?: string;
+  audioUrl?: string;
   groundingSources?: GroundingSource[];
   timestamp: Date;
 }
