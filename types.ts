@@ -1,4 +1,5 @@
 
+
 export enum AppView {
   LANDING = 'LANDING',
   LOGIN = 'LOGIN',
@@ -25,29 +26,43 @@ export interface UserProfile {
   avatarHue?: number;
 }
 
+export interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  image?: string;
+  videoUrl?: string;
+  audioUrl?: string;
+  groundingSources?: GroundingSource[];
+  timestamp: Date;
+  isDeepAnalysis?: boolean;
+}
+
+// Added MoodEntry interface for health tracking tools
 export interface MoodEntry {
   date: string;
   level: number;
-  note?: string;
 }
 
+// Added GratitudeEntry interface for health tracking tools
 export interface GratitudeEntry {
   id: string;
   date: string;
   text: string;
 }
 
+// Added CbtWinEntry interface for health tracking tools
 export interface CbtWinEntry {
   id: string;
   date: string;
   negativeThought: string;
   distortion: string;
   reframe: string;
-}
-
-export interface DailyIntention {
-  date: string;
-  text: string;
 }
 
 export interface AnamnesisData {
@@ -63,25 +78,10 @@ export interface AnamnesisData {
   supportNetwork: string;
   childhoodBrief: string;
   lifeGoals: string;
+  // Use specific entry types instead of any[] to resolve compilation errors
   moodHistory?: MoodEntry[];
   gratitudeLog?: GratitudeEntry[];
   cbtWins?: CbtWinEntry[];
-  dailyIntentions?: DailyIntention[];
-}
-
-export interface GroundingSource {
-  title: string;
-  uri: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-  image?: string;
-  audioUrl?: string;
-  groundingSources?: GroundingSource[];
-  timestamp: Date;
 }
 
 export interface AppState {
