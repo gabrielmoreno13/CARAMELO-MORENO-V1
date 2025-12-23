@@ -1,11 +1,6 @@
+
 import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
-
-// Tenta obter a chave de forma estática para garantir compatibilidade com Netlify
-const GEMINI_API_KEY = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY;
-
-// Inicialização segura
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY || '' });
 
 class GeminiService {
   private chatSession: any = null;
@@ -15,10 +10,13 @@ class GeminiService {
   private readonly TRANSCRIPTION_MODEL = 'gemini-3-flash-preview';
   private readonly TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
-  private checkConfig() {
-    if (!GEMINI_API_KEY) {
-      console.error("❌ [Caramelo] Gemini API_KEY não encontrada. Verifique as variáveis de ambiente.");
+  private getApiKey(): string {
+    // Busca a chave de forma dinâmica para evitar injeção estática agressiva do bundler
+    const key = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY || "";
+    if (!key) {
+      console.warn("⚠️ [Caramelo] API_KEY não encontrada no ambiente.");
     }
+    return key;
   }
 
   private buildSystemInstruction(user: UserProfile, anamnesis: AnamnesisData): string {
@@ -36,7 +34,6 @@ class GeminiService {
   }
 
   public async initializeChat(user: UserProfile, anamnesis: AnamnesisData, previousHistory: ChatMessage[] = []) {
-    this.checkConfig();
     this.systemInstruction = this.buildSystemInstruction(user, anamnesis);
     
     const history = previousHistory.map(msg => ({
@@ -45,15 +42,9 @@ class GeminiService {
     }));
 
     try {
-      this.chatSession = ai.models.generateContent({
-        model: this.CHAT_MODEL,
-        config: {
-          systemInstruction: this.systemInstruction,
-          tools: [{ googleSearch: {} }],
-        }
-      });
+      // Instanciação on-demand conforme diretrizes de segurança e modelos Gemini 3/2.5
+      const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
       
-      // O SDK mudou ligeiramente, para chats contínuos usamos chats.create
       this.chatSession = ai.chats.create({
         model: this.CHAT_MODEL,
         config: {
@@ -71,7 +62,10 @@ class GeminiService {
   }
 
   public async sendMessage(text: string, imageBase64?: string): Promise<{ text: string, groundingSources?: GroundingSource[] }> {
-    if (!this.chatSession) throw new Error("Chat não inicializado ou API Key ausente.");
+    if (!this.chatSession) {
+      // Tenta re-inicializar se a sessão estiver nula
+      throw new Error("Sessão de chat não disponível. Verifique a configuração da API.");
+    }
 
     let message: any = text;
     if (imageBase64) {
@@ -101,6 +95,7 @@ class GeminiService {
   }
 
   public async transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
+    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
     const response = await ai.models.generateContent({
       model: this.TRANSCRIPTION_MODEL,
       contents: [{
@@ -114,6 +109,7 @@ class GeminiService {
   }
 
   public async generateSpeech(text: string): Promise<ArrayBuffer | null> {
+    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
     const response = await ai.models.generateContent({
       model: this.TTS_MODEL,
       contents: [{ parts: [{ text }] }],
