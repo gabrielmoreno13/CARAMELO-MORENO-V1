@@ -28,20 +28,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, anamnesis, o
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Inicializa a sessão do Gemini
+  // Carrega histórico do banco e SÓ DEPOIS inicializa o Gemini
   useEffect(() => {
-    geminiService.initializeChat(user, anamnesis);
-  }, [user, anamnesis]);
-
-  // Carrega histórico do banco
-  useEffect(() => {
-    const loadHistory = async () => {
+    const loadHistoryAndInit = async () => {
         if (!user.id) return;
         try {
             const history = await dataService.getChatHistory(user.id);
-            if (history.length > 0) {
-                setMessages(history);
-            } else {
+            let currentMessages = history;
+
+            if (history.length === 0) {
                  // Saudação inicial se não houver histórico
                  const initialGreeting: ChatMessage = {
                     id: 'init-1',
@@ -49,18 +44,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, anamnesis, o
                     text: getInitialGreeting(),
                     timestamp: new Date()
                 };
-                setMessages([initialGreeting]);
+                currentMessages = [initialGreeting];
                 // Salva a saudação inicial
                 await dataService.saveMessage(user.id, initialGreeting);
             }
+            
+            setMessages(currentMessages);
+            // Inicializa a sessão do Gemini com o histórico recuperado
+            geminiService.initializeChat(user, anamnesis, currentMessages);
+
         } catch (error) {
             console.error("Erro ao carregar histórico", error);
+            // Inicializa mesmo com erro, para não travar
+            geminiService.initializeChat(user, anamnesis, []);
         } finally {
             setHistoryLoaded(true);
         }
     };
-    loadHistory();
-  }, [user.id]);
+    
+    loadHistoryAndInit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, anamnesis]); // Removemos user/anamnesis do initializeChat direto para evitar duplicação
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

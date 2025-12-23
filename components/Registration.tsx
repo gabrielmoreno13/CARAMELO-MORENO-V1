@@ -68,9 +68,13 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Tratamento de erros comuns do Supabase
+        if (authError.message === 'User already registered') throw new Error("Este e-mail já possui cadastro.");
+        if (authError.message.includes('API key')) throw new Error("Erro de configuração do sistema (Chave API inválida).");
+        throw authError;
+      }
       
-      // Se o cadastro exigir confirmação de email, o user pode vir nulo ou sem sessão ativa dependendo da config do Supabase
       if (!authData.user) {
           throw new Error("Erro ao iniciar sessão. Verifique se o cadastro foi realizado.");
       }
@@ -93,13 +97,7 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
 
     } catch (err: any) {
       console.error(err);
-      if (err.message?.includes('valid URL')) {
-          setError("Erro de configuração do servidor (URL inválida). Contate o suporte.");
-      } else if (err.message?.includes('already registered')) {
-          setError("Este e-mail já está cadastrado.");
-      } else {
-          setError(err.message || "Erro ao criar conta. Tente novamente.");
-      }
+      setError(err.message || "Erro ao criar conta. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +116,7 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
             <h2 className="text-3xl font-extrabold text-gray-800 dark:text-white mb-2">Criar Conta</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">Preencha seus dados para criar seu perfil seguro.</p>
 
-            {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-lg mb-4 text-sm font-medium">{error}</div>}
+            {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-lg mb-4 text-sm font-medium border border-red-100 dark:border-red-900">{error}</div>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* NOME */}

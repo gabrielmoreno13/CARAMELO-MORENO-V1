@@ -1,22 +1,28 @@
 import { GoogleGenAI, Chat, Modality } from "@google/genai";
-import { UserProfile, AnamnesisData, GroundingSource } from "../types";
+import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// A chave deve ser configurada nas Variáveis de Ambiente do Netlify como 'API_KEY'
+const API_KEY = process.env.API_KEY || '';
 
 class GeminiService {
   private ai: GoogleGenAI;
   private chatSession: Chat | null = null;
   
-  // MUDANÇA: Usando o modelo FLASH para máxima velocidade de resposta (requisito do usuário)
+  // MUDANÇA: Usando o modelo FLASH para máxima velocidade de resposta
   private readonly CHAT_MODEL = 'gemini-3-flash-preview'; 
   private readonly TRANSCRIPTION_MODEL = 'gemini-3-flash-preview';
   private readonly TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
   constructor() {
+    if (!API_KEY) {
+      console.warn("⚠️ AVISO: API_KEY do Gemini não encontrada. O chat não funcionará até ser configurada no Netlify.");
+    }
     this.ai = new GoogleGenAI({ apiKey: API_KEY });
   }
 
-  public initializeChat(user: UserProfile, anamnesis: AnamnesisData) {
+  public initializeChat(user: UserProfile, anamnesis: AnamnesisData, previousHistory: ChatMessage[] = []) {
+    if (!API_KEY) return;
+
     const systemInstruction = `
       PERSONA:
       Você é o CARAMELO, uma Inteligência Artificial de suporte emocional.
@@ -24,7 +30,7 @@ class GeminiService {
       Você NÃO é médico, NÃO é psicólogo.
       
       ESTILO DE RESPOSTA (CRUCIAL):
-      1. SEJA BREVE. Respostas longas cansam no celular. Use no máximo 2 ou 3 frases curtas por turno, a menos que esteja explicando algo complexo.
+      1. SEJA BREVE. Respostas longas cansam no celular. Use no máximo 2 ou 3 frases curtas por turno.
       2. TOM PROFISSIONAL: Use linguagem culta, correta, sem gírias, sem emojis infantis, mas com calor humano.
       3. EMPATIA PRÁTICA: Valide o sentimento do usuário e sugira um pequeno passo prático ou faça uma pergunta reflexiva.
       
@@ -38,32 +44,56 @@ class GeminiService {
       SEGURANÇA (GATILHOS DE EMERGÊNCIA):
       Se houver menção a suicídio, morte ou autolesão, sua resposta DEVE SER EXATAMENTE:
       "Identifico uma situação de risco. Como IA, não posso garantir sua segurança. Por favor, ligue para o CVV (188) ou vá a um hospital imediatamente."
-
-      ABORDAGEM:
-      Aja como o Woebot ou Wysa: faça perguntas curtas para guiar o usuário a entender seus próprios sentimentos. Não dê "palestras".
     `;
 
-    this.chatSession = this.ai.chats.create({
-      model: this.CHAT_MODEL,
-      config: {
-        systemInstruction: systemInstruction.trim(),
-        temperature: 0.5, 
-        // Desativando thinkingBudget para garantir resposta imediata
-        thinkingConfig: { thinkingBudget: 0 }, 
-        tools: [{ googleSearch: {} }]
-      },
+    // Converte o histórico do nosso formato para o formato do Gemini SDK
+    const history = previousHistory.map(msg => {
+      const parts: any[] = [{ text: msg.text }];
+      // Se houver imagem no histórico (base64), adiciona também
+      if (msg.image) {
+        // Remove o prefixo data:image/xyz;base64, se existir, para pegar apenas os dados
+        const cleanBase64 = msg.image.split(',')[1] || msg.image;
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: cleanBase64
+          }
+        });
+      }
+      return {
+        role: msg.role,
+        parts: parts
+      };
     });
+
+    try {
+      this.chatSession = this.ai.chats.create({
+        model: this.CHAT_MODEL,
+        history: history, // Injeta o histórico recuperado do banco
+        config: {
+          systemInstruction: systemInstruction.trim(),
+          temperature: 0.5, 
+          thinkingConfig: { thinkingBudget: 0 }, 
+          tools: [{ googleSearch: {} }]
+        },
+      });
+    } catch (e) {
+      console.error("Erro ao inicializar chat:", e);
+    }
   }
 
   public async sendMessage(text: string, imageBase64?: string): Promise<{ text: string, groundingSources?: GroundingSource[] }> {
+    if (!API_KEY) {
+      return { text: "⚠️ **Configuração Pendente:** A `API_KEY` do Google Gemini não foi configurada no Netlify. Por favor, adicione-a nas variáveis de ambiente." };
+    }
+
     if (!this.chatSession) {
-      throw new Error("Chat session not initialized");
+       return { text: "Ocorreu um erro de conexão. Por favor, recarregue a página e tente novamente." };
     }
 
     try {
       let result;
       
-      // Enviamos o texto diretamente, já que o contexto é tratado pela instrução do sistema e a saudação é local.
       if (imageBase64) {
         result = await this.chatSession.sendMessage({
           message: [
@@ -89,13 +119,17 @@ class GeminiService {
         groundingSources
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message to Gemini:", error);
+      if (error.message?.includes('API key') || error.status === 403) {
+         return { text: "⚠️ **Erro de Autenticação:** A chave de API fornecida parece inválida ou expirada. Verifique no Netlify." };
+      }
       return { text: "Estou com dificuldade de conexão no momento. Tente novamente em instantes." };
     }
   }
 
   public async transcribeAudio(audioBase64: string, mimeType: string = 'audio/wav'): Promise<string> {
+    if (!API_KEY) return "";
     try {
       const response = await this.ai.models.generateContent({
         model: this.TRANSCRIPTION_MODEL,
@@ -114,6 +148,7 @@ class GeminiService {
   }
 
   public async generateSpeech(text: string): Promise<ArrayBuffer | null> {
+    if (!API_KEY) return null;
     try {
       const response = await this.ai.models.generateContent({
         model: this.TTS_MODEL,

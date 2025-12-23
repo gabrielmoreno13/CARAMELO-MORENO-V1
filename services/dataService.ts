@@ -4,6 +4,7 @@ import { UserProfile, AnamnesisData, ChatMessage } from '../types';
 export const dataService = {
   // --- PERFIL ---
   async saveProfile(user: UserProfile) {
+    // O ID deve vir do Auth do Supabase
     const { error } = await supabase
       .from('profiles')
       .upsert({
@@ -14,9 +15,12 @@ export const dataService = {
         company: user.company,
         phone: user.phone,
         age: user.age
-      });
+      }, { onConflict: 'id' });
     
-    if (error) throw error;
+    if (error) {
+        console.error("Erro ao salvar perfil:", error);
+        throw new Error("Não foi possível salvar os dados do perfil.");
+    }
   },
 
   async getProfile(userId: string): Promise<UserProfile | null> {
@@ -26,7 +30,10 @@ export const dataService = {
       .eq('id', userId)
       .single();
 
-    if (error) return null;
+    if (error) {
+        console.log("Perfil não encontrado ou erro:", error.message);
+        return null;
+    }
     return data as UserProfile;
   },
 
@@ -36,10 +43,14 @@ export const dataService = {
       .from('anamnesis')
       .upsert({
         user_id: userId,
-        data: data // Assumindo que o campo 'data' é um JSONB
-      });
+        data: data, // Salvamos o objeto inteiro como JSONB
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
     
-    if (error) throw error;
+    if (error) {
+        console.error("Erro ao salvar anamnese:", error);
+        throw error;
+    }
   },
 
   async getAnamnesis(userId: string): Promise<AnamnesisData | null> {
@@ -47,26 +58,33 @@ export const dataService = {
       .from('anamnesis')
       .select('data')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle(); // maybeSingle evita erro 406 se não existir
 
-    if (error || !data) return null;
+    if (error) {
+        console.error("Erro ao buscar anamnese:", error);
+        return null;
+    }
+    if (!data) return null;
     return data.data as AnamnesisData;
   },
 
   // --- CHAT ---
   async saveMessage(userId: string, message: ChatMessage) {
-    // Salvamos apenas texto e role por enquanto para simplificar o DB
-    // Imagens grandes devem ir para o Storage, aqui assumimos texto
+    // Convertemos a data para string ISO segura para o Postgres
+    const timestamp = message.timestamp instanceof Date 
+        ? message.timestamp.toISOString() 
+        : new Date().toISOString();
+
     const { error } = await supabase
       .from('chat_history')
       .insert({
         user_id: userId,
         role: message.role,
         text: message.text,
-        timestamp: message.timestamp.toISOString()
+        timestamp: timestamp
       });
     
-    if (error) console.error("Erro ao salvar mensagem", error);
+    if (error) console.error("Erro ao salvar mensagem no histórico:", error);
   },
 
   async getChatHistory(userId: string): Promise<ChatMessage[]> {
@@ -76,11 +94,15 @@ export const dataService = {
       .eq('user_id', userId)
       .order('timestamp', { ascending: true });
 
-    if (error || !data) return [];
+    if (error) {
+        console.error("Erro ao recuperar histórico:", error);
+        return [];
+    }
+    if (!data) return [];
 
     return data.map((item: any) => ({
-      id: item.id || Math.random().toString(),
-      role: item.role,
+      id: item.id,
+      role: item.role as 'user' | 'model',
       text: item.text,
       timestamp: new Date(item.timestamp)
     }));
