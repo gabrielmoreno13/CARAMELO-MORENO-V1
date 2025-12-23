@@ -3,7 +3,7 @@ import { UserProfile, AnamnesisData, ChatMessage } from '../types';
 import { geminiService } from '../services/geminiService';
 import { dataService } from '../services/dataService';
 import ReactMarkdown from 'react-markdown';
-import { Send, Phone, AlertCircle, Mic, Image as ImageIcon, Volume2, X, Loader2, Link as LinkIcon, LogOut, Moon, Sun } from 'lucide-react';
+import { Send, Phone, AlertCircle, Mic, Image as ImageIcon, Volume2, X, Loader2, Link as LinkIcon, LogOut, Moon, Sun, AlertTriangle } from 'lucide-react';
 
 interface ChatInterfaceProps {
   user: UserProfile;
@@ -292,6 +292,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, anamnesis, o
         </div>
       </header>
 
+      {/* BANNER DE CONFIGURAÇÃO AUSENTE */}
+      {!geminiService.hasApiKey && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3 flex items-start gap-3 animate-fade-in">
+             <AlertTriangle className="text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" size={20} />
+             <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                 <strong>Configuração Necessária:</strong> A chave de API do Gemini não foi encontrada. O chat não funcionará corretamente.
+                 <br/>
+                 <span className="text-xs opacity-80">Adicione a variável <code>API_KEY</code> nas configurações de ambiente (Netlify ou local).</span>
+             </div>
+        </div>
+      )}
+
       {/* CHAT AREA */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {!historyLoaded ? (
@@ -312,7 +324,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, anamnesis, o
                     <div className={`max-w-[85%] md:max-w-[70%] px-5 py-4 rounded-xl text-[15px] leading-relaxed shadow-sm border transition-colors ${msg.role === 'user' ? 'bg-caramel-600 text-white border-caramel-700 rounded-tr-none' : 'bg-white text-gray-800 border-gray-200 rounded-tl-none dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700'}`}>
                     {msg.image && <div className="mb-3 rounded-lg overflow-hidden border border-gray-200/50 dark:border-gray-600"><img src={msg.image} alt="Enviado pelo usuário" className="max-h-56 object-cover" /></div>}
                     <div className="whitespace-pre-wrap font-sans markdown-content">
-                        <ReactMarkdown components={{ strong: ({node, ...props}) => <span className="font-bold text-current" {...props} />, em: ({node, ...props}) => <span className="italic" {...props} />, ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 my-2" {...props} />, ol: ({node, ...props}) => <ol className="list-decimal pl-4 space-y-1 my-2" {...props} />, p: ({node, ...props}) => <p className="mb-1 last:mb-0" {...props} /> }}>
+                        <ReactMarkdown components={{ 
+                            strong: ({node, ...props}) => <span className="font-bold text-current" {...props} />, 
+                            em: ({node, ...props}) => <span className="italic" {...props} />, 
+                            ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 my-2" {...props} />, 
+                            ol: ({node, ...props}) => <ol className="list-decimal pl-4 space-y-1 my-2" {...props} />, 
+                            p: ({node, ...props}) => <p className="mb-1 last:mb-0" {...props} />,
+                            a: ({node, ...props}) => <a className="underline hover:text-caramel-500" target="_blank" rel="noreferrer" {...props} />
+                        }}>
                         {msg.text}
                         </ReactMarkdown>
                     </div>

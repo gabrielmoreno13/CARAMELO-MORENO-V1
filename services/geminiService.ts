@@ -1,8 +1,16 @@
 import { GoogleGenAI, Chat, Modality } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
 
-// A chave deve ser configurada nas Variáveis de Ambiente do Netlify como 'API_KEY'
-const API_KEY = process.env.API_KEY || '';
+// Acesso seguro à variável de ambiente para evitar crash em ambientes sem 'process'
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || '';
+  } catch {
+    return '';
+  }
+};
+
+const API_KEY = getApiKey();
 
 class GeminiService {
   private ai: GoogleGenAI;
@@ -17,7 +25,14 @@ class GeminiService {
     if (!API_KEY) {
       console.warn("⚠️ AVISO: API_KEY do Gemini não encontrada. O chat não funcionará até ser configurada no Netlify.");
     }
-    this.ai = new GoogleGenAI({ apiKey: API_KEY });
+    // Inicializa com chave vazia se não existir para não quebrar a app inteira no boot, 
+    // os métodos individuais farão a verificação.
+    this.ai = new GoogleGenAI({ apiKey: API_KEY || 'dummy-key' });
+  }
+
+  // Getter para verificar status na UI
+  public get hasApiKey(): boolean {
+    return !!API_KEY;
   }
 
   public initializeChat(user: UserProfile, anamnesis: AnamnesisData, previousHistory: ChatMessage[] = []) {
@@ -84,11 +99,14 @@ class GeminiService {
 
   public async sendMessage(text: string, imageBase64?: string): Promise<{ text: string, groundingSources?: GroundingSource[] }> {
     if (!API_KEY) {
-      return { text: "⚠️ **Configuração Pendente:** A `API_KEY` do Google Gemini não foi configurada no Netlify. Por favor, adicione-a nas variáveis de ambiente." };
+      return { 
+          text: "⚠️ **Configuração Pendente:** A `API_KEY` do Google Gemini não foi detectada.\n\nPara corrigir:\n1. Gere uma chave no [Google AI Studio](https://aistudio.google.com/app/apikey).\n2. Adicione a variável `API_KEY` nas configurações de ambiente do seu projeto (Netlify)." 
+      };
     }
 
     if (!this.chatSession) {
-       return { text: "Ocorreu um erro de conexão. Por favor, recarregue a página e tente novamente." };
+       // Tenta reinicializar se a sessão foi perdida
+       return { text: "Ocorreu um erro de conexão. Por favor, recarregue a página." };
     }
 
     try {
