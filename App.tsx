@@ -50,9 +50,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const restoreSession = async () => {
         try {
-            const sessionResponse = await supabase.auth.getSession();
-            const session = sessionResponse?.data?.session;
-            if (session && session.user) {
+            const { data } = await supabase.auth.getSession();
+            const session = data?.session;
+            if (session?.user) {
                 const profile = await dataService.getProfile(session.user.id);
                 const anamnesis = await dataService.getAnamnesis(session.user.id);
                 if (profile) {
@@ -65,7 +65,7 @@ const App: React.FC = () => {
                 }
             }
         } catch (e) {
-            console.log("Supabase info: no session.");
+            console.log("Session recovery skip.");
         } finally {
             setIsLoaded(true);
         }
@@ -73,21 +73,17 @@ const App: React.FC = () => {
     restoreSession();
   }, []);
 
-  const navigate = (view: AppView) => setState(prev => ({ ...prev, view }));
-  const handleAnamnesisComplete = async (anamnesis: AnamnesisData) => {
-    if (state.user?.id) await dataService.saveAnamnesis(state.user.id, anamnesis);
-    setState(prev => ({ ...prev, anamnesis, view: AppView.CHAT }));
-  };
-  const goBackToLanding = async () => {
-    if (state.view === AppView.CHAT || state.view === AppView.TOOLS) await supabase.auth.signOut();
-    setState(prev => ({ ...prev, view: AppView.LANDING, anamnesis: null, user: null }));
+  const navigate = (view: AppView) => {
+    // Scroll to top on navigation
+    window.scrollTo(0, 0);
+    setState(prev => ({ ...prev, view }));
   };
 
   if (!isLoaded) {
       return (
-          <div className="min-h-screen bg-caramel-50 dark:bg-gray-900 flex flex-col items-center justify-center transition-colors">
-              <Loader2 className="animate-spin text-caramel-600 mb-4" size={48} />
-              <p className="text-gray-500 font-medium">Carregando Caramelo...</p>
+          <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center">
+              <Loader2 className="animate-spin text-caramel-500 mb-4" size={48} />
+              <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Caramelo está chegando...</p>
           </div>
       );
   }
@@ -100,7 +96,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <main className="font-sans text-gray-900 dark:text-gray-100 h-full bg-white dark:bg-gray-900 transition-colors duration-300">
+    <main className="font-sans text-gray-900 dark:text-gray-100 min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
       {state.view === AppView.LANDING && (
         <LandingPage onStart={() => navigate(AppView.REGISTER)} onNavigate={navigate} {...commonProps} />
       )}
@@ -108,13 +104,16 @@ const App: React.FC = () => {
         <Login onLoginSuccess={(u, a) => setState(prev => ({...prev, user: u, anamnesis: a, view: a ? AppView.CHAT : AppView.ANAMNESIS}))} onBack={() => navigate(AppView.LANDING)} {...commonProps} />
       )}
       {state.view === AppView.REGISTER && (
-        <Registration onComplete={(u) => setState(prev => ({...prev, user: u, view: AppView.ANAMNESIS}))} onBack={goBackToLanding} {...commonProps} />
+        <Registration onComplete={(u) => setState(prev => ({...prev, user: u, view: AppView.ANAMNESIS}))} onBack={() => navigate(AppView.LANDING)} {...commonProps} />
       )}
       {state.view === AppView.ANAMNESIS && state.user && (
-        <Anamnesis userName={state.user.name} onComplete={handleAnamnesisComplete} {...commonProps} />
+        <Anamnesis userName={state.user.name} onComplete={(a) => {
+          if (state.user?.id) dataService.saveAnamnesis(state.user.id, a);
+          setState(prev => ({ ...prev, anamnesis: a, view: AppView.CHAT }));
+        }} {...commonProps} />
       )}
       {state.view === AppView.CHAT && state.user && state.anamnesis && (
-        <ChatInterface user={state.user} anamnesis={state.anamnesis} onExit={goBackToLanding} onOpenTools={() => navigate(AppView.TOOLS)} {...commonProps} />
+        <ChatInterface user={state.user} anamnesis={state.anamnesis} onExit={() => navigate(AppView.LANDING)} onOpenTools={() => navigate(AppView.TOOLS)} {...commonProps} />
       )}
       {state.view === AppView.TOOLS && <SelfCareTools onNavigate={navigate} {...commonProps} />}
       {state.view === AppView.OUR_APPROACH && <OurApproachPage onStart={() => navigate(AppView.REGISTER)} onNavigate={navigate} {...commonProps} />}
