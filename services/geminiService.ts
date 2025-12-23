@@ -1,13 +1,37 @@
 import { GoogleGenAI, Chat, Modality } from "@google/genai";
 import { UserProfile, AnamnesisData, GroundingSource, ChatMessage } from "../types";
 
-// Acesso seguro à variável de ambiente para evitar crash em ambientes sem 'process'
+// Função robusta para capturar a API Key em diferentes ambientes (Vite, Webpack, etc)
 const getApiKey = () => {
+  let key = '';
+
+  // 1. Tenta via process.env (Padrão Node/Webpack/CRA)
   try {
-    return process.env.API_KEY || '';
-  } catch {
-    return '';
+    if (typeof process !== 'undefined' && process.env) {
+      // Tenta nomes comuns para variáveis de ambiente públicas
+      key = process.env.VITE_API_KEY || 
+            process.env.REACT_APP_API_KEY || 
+            process.env.NEXT_PUBLIC_API_KEY || 
+            process.env.API_KEY || '';
+    }
+  } catch (e) {
+    // Ignora erro de acesso ao process
   }
+
+  // 2. Se não achou, tenta via import.meta.env (Padrão Vite moderno)
+  if (!key) {
+    try {
+      // @ts-ignore
+      if (typeof import.meta !== 'undefined' && import.meta.env) {
+        // @ts-ignore
+        key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY || '';
+      }
+    } catch (e) {
+      // Ignora erro
+    }
+  }
+
+  return key;
 };
 
 const API_KEY = getApiKey();
@@ -23,10 +47,9 @@ class GeminiService {
 
   constructor() {
     if (!API_KEY) {
-      console.warn("⚠️ AVISO: API_KEY do Gemini não encontrada. O chat não funcionará até ser configurada no Netlify.");
+      console.warn("⚠️ AVISO: API_KEY do Gemini não encontrada. Verifique se VITE_API_KEY está configurada no Netlify.");
     }
-    // Inicializa com chave vazia se não existir para não quebrar a app inteira no boot, 
-    // os métodos individuais farão a verificação.
+    // Inicializa com chave vazia se não existir para não quebrar a app inteira no boot
     this.ai = new GoogleGenAI({ apiKey: API_KEY || 'dummy-key' });
   }
 
@@ -100,7 +123,7 @@ class GeminiService {
   public async sendMessage(text: string, imageBase64?: string): Promise<{ text: string, groundingSources?: GroundingSource[] }> {
     if (!API_KEY) {
       return { 
-          text: "⚠️ **Configuração Pendente:** A `API_KEY` do Google Gemini não foi detectada.\n\nPara corrigir:\n1. Gere uma chave no [Google AI Studio](https://aistudio.google.com/app/apikey).\n2. Adicione a variável `API_KEY` nas configurações de ambiente do seu projeto (Netlify)." 
+          text: "⚠️ **Configuração Pendente:** A chave de API não foi detectada.\n\n**Solução:** No Netlify, adicione uma variável chamada `VITE_API_KEY` com o valor da sua chave do Google AI Studio." 
       };
     }
 
@@ -140,7 +163,7 @@ class GeminiService {
     } catch (error: any) {
       console.error("Error sending message to Gemini:", error);
       if (error.message?.includes('API key') || error.status === 403) {
-         return { text: "⚠️ **Erro de Autenticação:** A chave de API fornecida parece inválida ou expirada. Verifique no Netlify." };
+         return { text: "⚠️ **Erro de Autenticação:** A chave de API fornecida parece inválida ou expirada. Verifique se a variável `VITE_API_KEY` está correta no Netlify." };
       }
       return { text: "Estou com dificuldade de conexão no momento. Tente novamente em instantes." };
     }

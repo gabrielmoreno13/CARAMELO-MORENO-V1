@@ -3,7 +3,7 @@ import { UserProfile, AnamnesisData, ChatMessage } from '../types';
 import { geminiService } from '../services/geminiService';
 import { dataService } from '../services/dataService';
 import ReactMarkdown from 'react-markdown';
-import { Send, Phone, AlertCircle, Mic, Image as ImageIcon, Volume2, X, Loader2, Link as LinkIcon, LogOut, Moon, Sun, AlertTriangle } from 'lucide-react';
+import { Send, Phone, AlertCircle, Mic, Image as ImageIcon, Volume2, X, Loader2, Link as LinkIcon, LogOut, Moon, Sun, Key } from 'lucide-react';
 
 interface ChatInterfaceProps {
   user: UserProfile;
@@ -294,12 +294,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, anamnesis, o
 
       {/* BANNER DE CONFIGURAÇÃO AUSENTE */}
       {!geminiService.hasApiKey && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3 flex items-start gap-3 animate-fade-in">
-             <AlertTriangle className="text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" size={20} />
-             <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                 <strong>Configuração Necessária:</strong> A chave de API do Gemini não foi encontrada. O chat não funcionará corretamente.
-                 <br/>
-                 <span className="text-xs opacity-80">Adicione a variável <code>API_KEY</code> nas configurações de ambiente (Netlify ou local).</span>
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 p-4 animate-fade-in">
+             <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
+                    <Key size={20} />
+                </div>
+                <div className="flex-1">
+                     <h3 className="font-bold text-orange-800 dark:text-orange-200 text-sm">Configuração de Segurança:</h3>
+                     <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                        Crie uma nova variável no Netlify chamada <code>VITE_API_KEY</code> e cole sua chave do Google nela.
+                        <br/>
+                        <span className="opacity-75">Isso é necessário porque o navegador protege variáveis sem esse prefixo.</span>
+                     </p>
+                </div>
+                <a 
+                   href="https://aistudio.google.com/app/apikey" 
+                   target="_blank" 
+                   rel="noreferrer"
+                   className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm whitespace-nowrap transition"
+                >
+                    Gerar Chave Grátis
+                </a>
              </div>
         </div>
       )}
