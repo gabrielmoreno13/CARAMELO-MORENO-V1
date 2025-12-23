@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# 🐶 CARAMELO v3 - Saúde Mental & IA
 
-This contains everything you need to run your app locally.
+![Caramelo Header](https://framerusercontent.com/images/8r2S0S0z0z0z0z0z0z.png) <!-- Substituir pela sua imagem de header se houver -->
 
-View your app in AI Studio: https://ai.studio/apps/drive/1yDvlJQBngl72j2sshz_aMlnJdLgS6W0t
+**Caramelo v3** é um assistente de saúde mental de próxima geração, desenvolvido para democratizar o acesso ao suporte emocional preventivo. Utilizando as tecnologias mais avançadas de IA do Google (Gemini 3 Pro), o sistema oferece diálogos baseados em TCC (Terapia Cognitivo-Comportamental) com empatia profunda.
 
-## Run Locally
+## ✨ Diferenciais da v3
 
-**Prerequisites:**  Node.js
+- **🧠 Deep Reasoning:** Utiliza o `thinkingBudget` de 32k tokens para analisar nuances psicológicas complexas antes de responder.
+- **🌐 Real-time Grounding:** Integração com Google Search e Maps para encontrar ajuda profissional e locais de apoio em tempo real.
+- **🎞️ Multimodalidade:** Capaz de analisar imagens de diários, desenhos ou expressões faciais para um acolhimento mais holístico.
+- **🛡️ Segurança de Elite:** Ambiente criptografado e protocolos SOS integrados para detecção de riscos.
 
+## 🛠️ Tecnologias
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Frontend:** React 19, Tailwind CSS, Lucide Icons.
+- **Inteligência Artificial:** SDK `@google/genai` (Modelos Gemini 3 Pro e 2.5 Flash).
+- **Backend/Auth:** Supabase.
+- **Deployment:** Vercel / Netlify.
+
+## 🚀 Como Iniciar
+
+1. Clone o repositório.
+2. Configure as variáveis de ambiente:
+   - `API_KEY`: Sua chave do Google AI Studio.
+   - `NEXT_PUBLIC_SUPABASE_URL`: URL do seu projeto Supabase.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Chave anônima do Supabase.
+3. Instale as dependências e rode `npm start` (ou utilize o ambiente de importmaps do index.html).
+
+## ⚠️ Aviso Legal
+
+O Caramelo **não substitui médicos ou psicólogos**. Em caso de emergência ou pensamentos de auto-extermínio, entre em contato imediatamente com o **CVV (188)** ou procure o serviço de emergência mais próximo.
+
+---
+*Desenvolvido com ♥ no Brasil 🇧🇷*
