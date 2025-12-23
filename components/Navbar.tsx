@@ -40,21 +40,22 @@ const LangSwitcher: React.FC<{
     <div className="relative inline-block text-left">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all border shadow-sm ${
+        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all border shadow-sm ${
           scrolled 
-            ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' 
-            : 'bg-white/20 backdrop-blur-md border-white/30'
-        } hover:scale-105 active:scale-95`}
-        aria-label="Selecionar Idioma"
+            ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200' 
+            : 'bg-white/10 backdrop-blur-md border-white/20 text-white'
+        } hover:bg-white/20 active:scale-95`}
+        aria-label="Change Language"
       >
-        <span className="text-xl leading-none">{flags[language]}</span>
-        <ChevronDown size={14} className={`transition-transform ${scrolled ? 'text-gray-600 dark:text-gray-400' : 'text-white'} ${isOpen ? 'rotate-180' : ''}`} />
+        <Globe size={16} className={scrolled ? 'text-caramel-600' : 'text-caramel-400'} />
+        <span className="text-lg leading-none">{flags[language]}</span>
+        <ChevronDown size={14} className={`transition-transform opacity-50 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-[90]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 w-48 animate-fade-in z-[100] overflow-hidden">
+          <div className="fixed inset-0 z-[990]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 w-48 animate-fade-in z-[999] overflow-hidden">
             {(['pt', 'en', 'es'] as Language[]).map((lang) => (
               <button 
                 key={lang}
@@ -88,52 +89,50 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-gray-200 dark:border-gray-800 shadow-lg py-2' : 'bg-transparent border-transparent py-4'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate(AppView.LANDING)}>
-          <CarameloLogo className="w-10 h-10 md:w-12 md:h-12" />
-          <span className={`text-2xl font-black tracking-tight transition-colors ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>Caramelo</span>
+        <div className="flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => onNavigate(AppView.LANDING)}>
+          <CarameloLogo className="w-8 h-8 md:w-10 md:h-10" />
+          <span className={`text-xl md:text-2xl font-black tracking-tight transition-colors ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>Caramelo</span>
         </div>
 
-        {/* Links Desktop */}
-        <div className="hidden lg:flex items-center gap-8 px-6 py-2">
+        {/* Links Desktop (Pill shape como no seu print) */}
+        <div className={`hidden lg:flex items-center gap-6 px-6 py-2 rounded-full border transition-all ${scrolled ? 'bg-gray-50 border-gray-100 dark:bg-gray-800 dark:border-gray-700' : 'bg-white/5 border-white/10'}`}>
           {['OUR_APPROACH', 'FOR_BUSINESS', 'PROFESSIONAL_HELP', 'ABOUT_US'].map((v) => (
             <button 
               key={v}
               onClick={() => onNavigate(AppView[v as keyof typeof AppView])} 
-              className={`text-sm font-bold transition-colors ${scrolled ? 'text-gray-600 dark:text-gray-300' : 'text-white/80'} hover:text-caramel-500`}
+              className={`text-xs font-black uppercase tracking-wider transition-colors ${scrolled ? 'text-gray-500 hover:text-caramel-600 dark:text-gray-400' : 'text-white/70 hover:text-white'}`}
             >
               {t[v.toLowerCase().replace('_', '') as keyof typeof t] || v}
             </button>
           ))}
         </div>
 
-        {/* Ações Direitas */}
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Seletor de Idioma - Visível a partir de SM */}
-          <div className="hidden sm:block">
-            <LangSwitcher language={language} onLanguageChange={onLanguageChange} scrolled={scrolled} />
-          </div>
+        {/* Ações Direitas (Sempre visíveis) */}
+        <div className="flex items-center gap-1.5 md:gap-3">
+          {/* Seletor de Idioma - Agora visível em TODAS as telas */}
+          <LangSwitcher language={language} onLanguageChange={onLanguageChange} scrolled={scrolled} />
           
-          <button onClick={toggleTheme} className={`p-2.5 rounded-xl transition ${scrolled ? 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800' : 'text-white hover:bg-white/10'}`}>
-            {isDarkMode ? <Sun size={20}/> : <Moon size={20}/>}
+          <button onClick={toggleTheme} className={`p-2 rounded-xl transition ${scrolled ? 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800' : 'text-white hover:bg-white/10'}`}>
+            {isDarkMode ? <Sun size={18}/> : <Moon size={18}/>}
           </button>
           
-          <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => onNavigate(AppView.LOGIN)} className={`font-bold transition ${scrolled ? 'text-gray-600 dark:text-gray-300' : 'text-white'}`}>{t.login}</button>
-            <button onClick={onStart} className="bg-caramel-500 hover:bg-caramel-600 text-white font-black py-2.5 px-6 rounded-xl shadow-md transition-all active:scale-95">
+          <div className="hidden sm:flex items-center gap-2 md:gap-3">
+            <button onClick={() => onNavigate(AppView.LOGIN)} className={`text-sm font-black transition ${scrolled ? 'text-gray-600 dark:text-gray-300' : 'text-white'}`}>{t.login}</button>
+            <button onClick={onStart} className="bg-caramel-500 hover:bg-caramel-600 text-white text-sm font-black py-2 px-4 md:px-6 rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap">
               {activeView === AppView.LANDING ? t.register : t.app}
             </button>
           </div>
           
           {/* Botão Mobile */}
           <button className={`lg:hidden p-2 ${scrolled ? 'text-gray-600 dark:text-gray-300' : 'text-white'}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* Menu Mobile Overlay */}
+      {/* Menu Mobile Lateral */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-[100] bg-white dark:bg-gray-900 animate-fade-in flex flex-col p-8">
           <div className="flex justify-between items-center mb-10">
@@ -154,20 +153,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             
             <div className="h-px bg-gray-100 dark:bg-gray-800 my-4"></div>
             
-            {/* Idiomas no Mobile - Sempre Visível */}
+            {/* Idiomas no Mobile com descrição completa */}
             <div className="space-y-4">
               <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <Globe size={14} /> Selecionar Idioma
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {(['pt', 'en', 'es'] as Language[]).map(l => (
                   <button 
                     key={l} 
                     onClick={() => { onLanguageChange(l); setMobileMenuOpen(false); }} 
-                    className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all ${language === l ? 'border-caramel-500 bg-caramel-50 dark:bg-caramel-900/20 font-black text-caramel-700 dark:text-caramel-400' : 'border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400'}`}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${language === l ? 'border-caramel-500 bg-caramel-50 dark:bg-caramel-900/20 font-black text-caramel-700 dark:text-caramel-400' : 'border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400'}`}
                   >
                     <span className="text-2xl">{l === 'pt' ? '🇧🇷' : l === 'en' ? '🇺🇸' : '🇪🇸'}</span>
-                    <span>{l === 'pt' ? 'BR' : l === 'en' ? 'EN' : 'ES'}</span>
+                    <span className="text-lg">{l === 'pt' ? 'Português' : l === 'en' ? 'English' : 'Español'}</span>
                   </button>
                 ))}
               </div>
