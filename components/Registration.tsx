@@ -1,16 +1,21 @@
+
 import React, { useState } from 'react';
-import { UserProfile } from '../types';
-import { User, ChevronLeft, Lock, FileText, Loader2, Mail, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { UserProfile, Language } from '../types';
+import { User, ChevronLeft, Lock, FileText, Loader2, Mail, CheckCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { getT } from '../translations';
 
 interface RegistrationProps {
   onComplete: (user: UserProfile) => void;
   onBack: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  language: Language;
 }
 
-export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, isDarkMode, toggleTheme }) => {
+export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, isDarkMode, toggleTheme, language }) => {
+  const t = getT(language);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -35,8 +40,6 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
     setError(null);
 
     try {
-      // REGRA SÊNIOR: Enviamos os dados extras como METADATA. 
-      // O Trigger que criamos no SQL vai ler isso e criar o perfil automaticamente no banco.
       const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -54,10 +57,8 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
       if (authError) throw authError;
 
       if (data.user && !data.session) {
-        // E-mail de confirmação ativado nas configurações do Supabase
         setStep('success');
       } else if (data.user && data.session) {
-        // Logado direto (e-mail confirmado ou confirmação desativada)
         onComplete({
           id: data.user.id,
           name: formData.name,
@@ -78,17 +79,16 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 max-w-md w-full text-center border border-gray-100 dark:border-gray-700">
-          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
-            <CheckCircle size={40} />
+        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl p-10 max-w-md w-full text-center border border-gray-100 dark:border-gray-700">
+          <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-8 text-green-600">
+            <CheckCircle size={48} />
           </div>
-          <h2 className="text-2xl font-bold dark:text-white mb-4">Verifique seu e-mail</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-            Enviamos um link de ativação para <strong>{formData.email}</strong>. 
-            Você precisa clicar nele para liberar seu acesso ao Caramelo.
+          <h2 className="text-3xl font-black dark:text-white mb-4">{t.regSuccessTitle}</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+            {t.regSuccessDesc.replace('{email}', formData.email)}
           </p>
-          <button onClick={onBack} className="w-full bg-caramel-600 text-white font-bold py-4 rounded-xl hover:bg-caramel-700 transition">
-            Voltar para o Login
+          <button onClick={onBack} className="w-full bg-caramel-600 text-white font-black py-5 rounded-2xl hover:bg-caramel-700 transition shadow-lg">
+            {t.login}
           </button>
         </div>
       </div>
@@ -98,65 +98,65 @@ export const Registration: React.FC<RegistrationProps> = ({ onComplete, onBack, 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-gray-100 dark:border-gray-700">
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-caramel-600 mb-8 font-bold transition">
-            <ChevronLeft size={20} /> Voltar
+        <div className="bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl p-8 md:p-12 border border-gray-100 dark:border-gray-700">
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-caramel-600 mb-8 font-black transition">
+            <ChevronLeft size={20} /> {t.back}
           </button>
           
-          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Criar conta</h2>
-          <p className="text-gray-500 mb-8">Comece sua jornada de autocuidado hoje.</p>
+          <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-2">{t.regTitle}</h2>
+          <p className="text-gray-500 mb-8 font-medium">{t.regSub}</p>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl mb-6 text-sm border border-red-100 dark:border-red-900/50 flex items-center gap-2">
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl mb-6 text-sm border border-red-100 dark:border-red-900/50 flex items-center gap-2">
               <AlertTriangle size={18} /> {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Nome</label>
+                <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">{t.nameLabel}</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                  <input name="name" required value={formData.name} onChange={handleChange} className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Seu nome" />
+                  <input name="name" required value={formData.name} onChange={handleChange} className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white outline-none" placeholder="..." />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Idade</label>
-                <input name="age" type="number" required value={formData.age} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Ex: 25" />
+                <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">{t.ageLabel}</label>
+                <input name="age" type="number" required value={formData.age} onChange={handleChange} className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white outline-none" placeholder="Ex: 25" />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1">E-mail</label>
+              <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">{t.emailLabel}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                <input name="email" type="email" required value={formData.email} onChange={handleChange} className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="seu@email.com" />
+                <input name="email" type="email" required value={formData.email} onChange={handleChange} className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white outline-none" placeholder="email@exemplo.com" />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1">CPF (Opcional)</label>
+              <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">{t.cpfLabel}</label>
               <div className="relative">
                 <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                <input name="cpf" value={formData.cpf} onChange={handleChange} className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="000.000.000-00" />
+                <input name="cpf" value={formData.cpf} onChange={handleChange} className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white outline-none" placeholder="..." />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Senha</label>
+              <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">{t.passLabel}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                <input name="password" type="password" required minLength={6} value={formData.password} onChange={handleChange} className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white" placeholder="Mínimo 6 dígitos" />
+                <input name="password" type="password" required minLength={6} value={formData.password} onChange={handleChange} className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border-none focus:ring-2 focus:ring-caramel-500 dark:text-white outline-none" placeholder="******" />
               </div>
             </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-caramel-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-caramel-700 transition flex items-center justify-center gap-2 mt-4">
-              {isLoading ? <Loader2 className="animate-spin" /> : "Criar minha conta"}
+            <button type="submit" disabled={isLoading} className="w-full bg-caramel-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-caramel-700 transition flex items-center justify-center gap-2 mt-4 active:scale-95">
+              {isLoading ? <Loader2 className="animate-spin" /> : t.regBtn}
             </button>
           </form>
           
-          <p className="mt-8 text-center text-sm text-gray-400">
+          <p className="mt-8 text-center text-xs text-gray-400 leading-relaxed">
             Ao se cadastrar, você concorda com nossos <span className="underline cursor-pointer">Termos</span> e <span className="underline cursor-pointer">Privacidade</span>.
           </p>
         </div>

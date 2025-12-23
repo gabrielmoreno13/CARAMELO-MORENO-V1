@@ -7,10 +7,6 @@ class GeminiService {
   private readonly LIVE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
   private readonly TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
-  private getApiKey(): string {
-    return process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY || "";
-  }
-
   public buildSystemInstruction(user: UserProfile, anamnesis: AnamnesisData, lang: Language = 'pt'): string {
     const langInstructions = {
       pt: "Você fala Português do Brasil. Seja acolhedor e use gírias leves se apropriado.",
@@ -36,7 +32,8 @@ class GeminiService {
   }
 
   public async createChatSession(user: UserProfile, anamnesis: AnamnesisData, history: ChatMessage[], lang: Language = 'pt') {
-    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
+    // Correctly initialize GoogleGenAI using process.env.API_KEY directly
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const formattedHistory = history.map(msg => ({
       role: msg.role === 'model' ? 'model' : 'user',
       parts: [{ text: msg.text }]
@@ -56,7 +53,7 @@ class GeminiService {
   }
 
   public async transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
       const response = await ai.models.generateContent({
         model: this.CHAT_MODEL,
@@ -67,6 +64,7 @@ class GeminiService {
           ]
         }]
       });
+      // Correct extraction of text output from GenerateContentResponse
       return response.text || "";
     } catch (e) {
       console.error("Transcription error:", e);
@@ -80,11 +78,12 @@ class GeminiService {
     onClose?: (e: any) => void,
     onError?: (e: any) => void
   }) {
-    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     return ai.live.connect({
       model: this.LIVE_MODEL,
       config: {
         systemInstruction: config.systemInstruction,
+        // Ensure responseModalities is an array with exactly one Modality.AUDIO
         responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
@@ -102,7 +101,7 @@ class GeminiService {
   }
 
   public async generateSpeech(text: string, lang: Language = 'pt'): Promise<ArrayBuffer | null> {
-    const ai = new GoogleGenAI({ apiKey: this.getApiKey() });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
       const response = await ai.models.generateContent({
         model: this.TTS_MODEL,
@@ -114,6 +113,7 @@ class GeminiService {
           }
         }
       });
+      // Extracting inline audio data from candidates is correct for PCM output in TTS
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
         const binaryString = atob(base64Audio);
