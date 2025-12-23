@@ -3,7 +3,7 @@ import { Language } from './types';
 
 export const translations = {
   pt: {
-    // Landing & Global
+    // Global & Navbar
     heroTitle: "Seu amigo leal para toda hora.",
     heroSub: "IA com empatia real",
     heroDesc: "O Caramelo une tecnologia avançada e psicologia comportamental para te ouvir sem julgamentos. Um espaço seguro para sua mente respirar 24h por dia.",
@@ -21,16 +21,16 @@ export const translations = {
     back: "Voltar",
     finish: "Concluir",
 
-    // Social Proof
+    // Social Proof & Stats
     statsUsers: "+50 mil vidas impactadas",
     statsAvailability: "Disponível 24/7",
-    statsSatisfaction: "98% de acolhimento positivo",
+    statsSatisfaction: "98% Acolhimento Positivo",
+    testimonialTitle: "O que dizem os Caramelos",
+    testimonialSub: "Histórias reais de quem encontrou acolhimento.",
 
-    // Problem Section
+    // Problem & Solution
     problemTitle: "A saúde mental não pode esperar o agendamento.",
     problemDesc: "Terapia tradicional é cara e crises não marcam hora. O Caramelo é o suporte que está no seu bolso no momento exato da dor.",
-
-    // Features Section
     featChatTitle: "Conversa em Tempo Real",
     featChatDesc: "Desabafe via texto ou áudio e receba acolhimento baseado em TCC.",
     featVoiceTitle: "Chamadas de Voz",
@@ -43,8 +43,13 @@ export const translations = {
     whyDesc: "O vira-lata caramelo é o símbolo brasileiro da lealdade e resiliência. Ele não julga, ele apenas acompanha. Nossa IA carrega essa essência: acolhimento puro.",
 
     // B2B Section
-    b2bTitle: "Leve o Caramelo para sua Empresa",
+    b2bTitle: "Caramelo para sua Empresa",
+    b2bSub: "Cuide da mente do seu time, potencialize resultados.",
     b2bDesc: "Reduza o turnover e o burnout com um benefício de saúde mental que os colaboradores realmente usam.",
+    b2bStat1: "Redução de Burnout",
+    b2bStat2: "Engajamento",
+    b2bStat3: "Anônimo",
+    b2bStat4: "ROI Mental",
 
     // FAQ Section
     faqTitle: "Dúvidas Frequentes",
@@ -52,6 +57,37 @@ export const translations = {
     faqA1: "Sim, seus dados são criptografados e não compartilhamos conversas com terceiros.",
     faqQ2: "Substitui um psicólogo?",
     faqA2: "Não. Somos um suporte complementar para o dia a dia e primeiros socorros emocionais.",
+
+    // Extra Pages: Approach
+    approachHero: "IA com Coração Humano",
+    approachDesc: "Combinamos técnicas baseadas em evidências com a acessibilidade da tecnologia para criar um espaço de escuta ativa e segura.",
+    approachCBT: "Cognitivo-Comportamental",
+    approachCBTDesc: "Utilizamos princípios de reestruturação cognitiva para ajudar a identificar e mudar padrões de pensamento negativos.",
+    approachSafety: "Segurança Clínica",
+    approachSafetyDesc: "Protocolos rigorosos para detecção de crises. O sistema sabe quando sugerir ajuda humana especializada.",
+    approachAlliance: "Aliança Terapêutica",
+    approachAllianceDesc: "Focamos em criar um vínculo de confiança. A aliança é crucial para o sucesso do suporte.",
+
+    // Extra Pages: Professional Help
+    helpTitle: "Entenda os Limites",
+    helpDesc: "O Caramelo é uma ferramenta poderosa, mas não substitui o cuidado humano especializado.",
+    helpTableFeature: "Recurso",
+    helpTableCaramelo: "Caramelo AI",
+    helpTableHuman: "Psicólogo Humano",
+    helpTableAvailability: "Disponibilidade",
+    helpTableCost: "Custo",
+    helpTableDiagnosis: "Diagnóstico Clínico",
+    helpEmergencyTitle: "Em caso de emergência",
+    helpEmergencyDesc: "Se você estiver em perigo imediato, não use o aplicativo. Ligue para as autoridades.",
+
+    // Extra Pages: About
+    aboutMissionTitle: "Nossa Missão",
+    aboutMissionDesc: "Democratizar o acesso ao bem-estar emocional, garantindo que ninguém precise enfrentar seus momentos difíceis sozinho.",
+    aboutWhyTitle: "Por que 'Caramelo'?",
+    aboutYear: "Ano de Fundação",
+    aboutLocation: "Sede em São Paulo",
+    aboutTech: "Tecnologia Gemini",
+    aboutLove: "Feito com Amor",
 
     // Auth & App
     loginTitle: "Bem-vindo de volta!",
@@ -67,8 +103,6 @@ export const translations = {
     regBtn: "Criar minha conta",
     regSuccessTitle: "Verifique seu e-mail",
     regSuccessDesc: "Enviamos um link de ativação para seu e-mail.",
-    
-    // Anamnesis
     anaWelcome: "Olá, {name}! Como você está hoje?",
     anaSub: "Selecione o que melhor descreve seu momento.",
     anaStep: "ETAPA",
@@ -87,8 +121,6 @@ export const translations = {
     anaRoutine: "Sua Rotina",
     anaActivity: "Atividade Física",
     anaAppetite: "Apetite",
-
-    // Chat Interface
     voiceCall: "Chamada de Voz",
     endCall: "Encerrar Chamada",
     listening: "Ouvindo você...",
@@ -120,10 +152,11 @@ export const translations = {
     statsUsers: "+50k lives impacted",
     statsAvailability: "24/7 Availability",
     statsSatisfaction: "98% Positive support rate",
+    testimonialTitle: "What Caramelos say",
+    testimonialSub: "Real stories from those who found support.",
 
     problemTitle: "Mental health can't wait for an appointment.",
     problemDesc: "Traditional therapy is expensive and crises don't have schedules. Caramelo is the support in your pocket at the exact moment of pain.",
-
     featChatTitle: "Real-time Conversation",
     featChatDesc: "Vent via text or audio and receive CBT-based support.",
     featVoiceTitle: "Voice Calls",
@@ -135,13 +168,46 @@ export const translations = {
     whyDesc: "The 'Caramelo' dog is the Brazilian symbol of loyalty and resilience. It doesn't judge, it just follows. Our AI carries this essence: pure support.",
 
     b2bTitle: "Caramelo for your Company",
+    b2bSub: "Take care of your team's mind, boost results.",
     b2bDesc: "Reduce turnover and burnout with a mental health benefit that employees actually use.",
+    b2bStat1: "Burnout Reduction",
+    b2bStat2: "Engagement",
+    b2bStat3: "Anonymous",
+    b2bStat4: "Mental ROI",
 
     faqTitle: "FAQ",
     faqQ1: "Is it safe and anonymous?",
     faqA1: "Yes, your data is encrypted and we do not share conversations with third parties.",
     faqQ2: "Does it replace a psychologist?",
     faqA2: "No. We are a complementary support for daily life and emotional first aid.",
+
+    approachHero: "AI with a Human Heart",
+    approachDesc: "We combine evidence-based techniques with tech accessibility to create an active and safe listening space.",
+    approachCBT: "Cognitive-Behavioral",
+    approachCBTDesc: "We use cognitive restructuring principles to help identify and change negative thought patterns.",
+    approachSafety: "Clinical Safety",
+    approachSafetyDesc: "Strict crisis detection protocols. The system knows when to suggest specialized human help.",
+    approachAlliance: "Therapeutic Alliance",
+    approachAllianceDesc: "We focus on building a bond of trust. The alliance is crucial for the success of support.",
+
+    helpTitle: "Understand the Limits",
+    helpDesc: "Caramelo is a powerful tool, but it does not replace specialized human care.",
+    helpTableFeature: "Feature",
+    helpTableCaramelo: "Caramelo AI",
+    helpTableHuman: "Human Psychologist",
+    helpTableAvailability: "Availability",
+    helpTableCost: "Cost",
+    helpTableDiagnosis: "Clinical Diagnosis",
+    helpEmergencyTitle: "In case of emergency",
+    helpEmergencyDesc: "If you are in immediate danger, do not use the app. Call authorities.",
+
+    aboutMissionTitle: "Our Mission",
+    aboutMissionDesc: "Democratize access to emotional well-being, ensuring that no one has to face their difficult moments alone.",
+    aboutWhyTitle: "Why 'Caramelo'?",
+    aboutYear: "Founded Year",
+    aboutLocation: "Headquarters in São Paulo",
+    aboutTech: "Gemini Technology",
+    aboutLove: "Made with Love",
 
     loginTitle: "Welcome back!",
     loginSub: "Enter your credentials to continue.",
@@ -156,7 +222,6 @@ export const translations = {
     regBtn: "Create my account",
     regSuccessTitle: "Verify your email",
     regSuccessDesc: "We've sent an activation link to your email.",
-
     anaWelcome: "Hello, {name}! How are you today?",
     anaSub: "Select what best describes your current moment.",
     anaStep: "STEP",
@@ -175,7 +240,6 @@ export const translations = {
     anaRoutine: "Your Routine",
     anaActivity: "Physical Activity",
     anaAppetite: "Appetite",
-
     voiceCall: "Voice Call",
     endCall: "End Call",
     listening: "Listening...",
@@ -199,36 +263,70 @@ export const translations = {
     emergency: "En caso de emergencia, llame a los servicios locales.",
     methodology: "Enfoque",
     forBusiness: "Empresas",
-    help: "Ayuda Profesional",
+    help: "Ayuda Profissional",
     about: "Nuestra Historia",
     back: "Volver",
     finish: "Concluir",
 
     statsUsers: "+50 mil vidas impactadas",
     statsAvailability: "Disponible 24/7",
-    statsSatisfaction: "98% de apoyo positivo",
+    statsSatisfaction: "98% Apoyo Positivo",
+    testimonialTitle: "Lo que dicen los Caramelos",
+    testimonialSub: "Historias reales de quienes encontraron apoyo.",
 
     problemTitle: "La salud mental no puede esperar a una cita.",
     problemDesc: "La terapia tradicional es costosa y las crisis no tienen horario. Caramelo es el apoyo en tu bolsillo en el momento exacto del dolor.",
-
     featChatTitle: "Conversación en Tiempo Real",
-    featChatDesc: "Desahógate por texto o audio y recibe apoyo basado en TCC.",
+    featChatDesc: "Desahógate por texto o audio y recebe apoyo basado en TCC.",
     featVoiceTitle: "Llamadas de Voz",
     featVoiceDesc: "Siente la cercanía de una voz amiga para calmar crisis de ansiedad.",
     featToolsTitle: "Arsenal de Autocuidado",
-    featToolsDesc: "Diarios de gratitud, ejercicios de respiración y monitor de ánimo.",
+    featToolsDesc: "Diarios de gratitud, ejercicios de respiración e monitor de ánimo.",
 
     whyTitle: "¿Por qué Caramelo?",
     whyDesc: "El perro 'Caramelo' es el símbolo brasileño de lealtad y resiliencia. No juzga, solo acompaña. Nuestra IA lleva esa esencia: apoyo puro.",
 
     b2bTitle: "Caramelo para tu Empresa",
-    b2bDesc: "Reduce la rotación y el burnout con un beneficio de salud mental que los empleados realmente usan.",
+    b2bSub: "Cuida la mente de tu equipo, potencia los resultados.",
+    b2bDesc: "Reduce la rotación y el burnout con un beneficio de saúde mental que os empleados realmente usan.",
+    b2bStat1: "Reducción de Burnout",
+    b2bStat2: "Compromiso",
+    b2bStat3: "Anônimo",
+    b2bStat4: "ROI Mental",
 
     faqTitle: "Preguntas Frecuentes",
-    faqQ1: "¿Es seguro y anónimo?",
-    faqA1: "Sí, sus datos están encriptados y no compartimos conversaciones con terceros.",
+    faqQ1: "¿Es seguro y anônimo?",
+    faqA1: "Sí, tus datos están cifrados y no compartimos conversaciones con terceros.",
     faqQ2: "¿Reemplaza a un psicólogo?",
-    faqA2: "No. Somos un soporte complementario para el día a dia y primeros auxilios emocionales.",
+    faqA2: "No. Somos um suporte complementario para el día a dia y primeros auxilios emocionales.",
+
+    approachHero: "IA con Corazón Humano",
+    approachDesc: "Combinamos técnicas basadas en evidencia con accesibilidad tecnológica para crear un espacio de escucha activa y segura.",
+    approachCBT: "Cognitivo-Conductual",
+    approachCBTDesc: "Utilizamos principios de reestructuración cognitiva para ayudar a identificar y cambiar patrones de pensamiento negativos.",
+    approachSafety: "Seguridad Clínica",
+    approachSafetyDesc: "Protocolos estrictos para detección de crisis. El sistema sabe cuándo sugerir ayuda humana especializada.",
+    approachAlliance: "Alianza Terapéutica",
+    approachAllianceDesc: "Nos enfocamos en construir un vínculo de confianza. La alianza es crucial para el éxito del soporte.",
+
+    helpTitle: "Entiende los Límites",
+    helpDesc: "Caramelo es una herramienta poderosa, mas não reemplaza o cuidado humano especializado.",
+    helpTableFeature: "Recurso",
+    helpTableCaramelo: "Caramelo AI",
+    helpTableHuman: "Psicólogo Humano",
+    helpTableAvailability: "Disponibilidad",
+    helpTableCost: "Costo",
+    helpTableDiagnosis: "Diagnóstico Clínico",
+    helpEmergencyTitle: "En caso de emergencia",
+    helpEmergencyDesc: "Si estás en peligro inmediato, no uses la aplicación. Llama a las autoridades.",
+
+    aboutMissionTitle: "Nuestra Misión",
+    aboutMissionDesc: "Democratizar o acesso ao bem-estar emocional, garantindo que ninguém tenha que enfrentar seus momentos difíceis sozinho.",
+    aboutWhyTitle: "¿Por qué 'Caramelo'?",
+    aboutYear: "Año de Fundación",
+    aboutLocation: "Sede en São Paulo",
+    aboutTech: "Tecnología Gemini",
+    aboutLove: "Hecho con Amor",
 
     loginTitle: "¡Bienvenido de nuevo!",
     loginSub: "Ingresa tus credenciales para continuar.",
@@ -243,7 +341,6 @@ export const translations = {
     regBtn: "Crear mi cuenta",
     regSuccessTitle: "Verifica tu correo",
     regSuccessDesc: "Hemos enviado un link de activación a tu correo.",
-
     anaWelcome: "¡Hola, {name}! ¿Cómo estás hoy?",
     anaSub: "Selecciona lo que mejor describe tu momento.",
     anaStep: "PASO",
@@ -257,12 +354,11 @@ export const translations = {
     anaMoodEqu: "Equilibrado",
     anaComplaint: "¿Qué es lo que más te molesta ahora?",
     anaAnxiety: "Nivel de Ansiedad",
-    anaSleep: "Calidad del Sueño",
+    anaSleep: "Qualidade do Sono",
     anaMed: "¿Tomas alguna medicación?",
     anaRoutine: "Tu Rutina",
     anaActivity: "Actividad Física",
     anaAppetite: "Apetito",
-
     voiceCall: "Llamada de Voz",
     endCall: "Terminar Llamada",
     listening: "Escuchando...",

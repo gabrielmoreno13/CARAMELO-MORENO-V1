@@ -3,36 +3,40 @@ import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google
 import { UserProfile, AnamnesisData, ChatMessage, Language } from "../types";
 
 class GeminiService {
-  private readonly CHAT_MODEL = 'gemini-3-flash-preview'; 
+  // Modelos atualizados conforme diretrizes
+  private readonly CHAT_MODEL = 'gemini-3-pro-preview'; 
   private readonly LIVE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
   private readonly TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+  private readonly FLASH_MODEL = 'gemini-3-flash-preview';
 
   public buildSystemInstruction(user: UserProfile, anamnesis: AnamnesisData, lang: Language = 'pt'): string {
     const langInstructions = {
-      pt: "Você fala Português do Brasil. Seja acolhedor e use gírias leves se apropriado.",
-      en: "You speak English. Note: You are a 'Vira-lata Caramelo', a famous Brazilian mixed-breed dog known for loyalty and resilience. Be warm and friendly.",
-      es: "Hablas Español. Nota: Eres un 'Vira-lata Caramelo', un perro mestizo brasileño famoso por su lealtad y resiliencia. Sé cálido y amable."
+      pt: "Você fala Português do Brasil de forma natural e acolhedora. Use um tom de voz calmo e empático.",
+      en: "You speak English. Note: You are a 'Vira-lata Caramelo', a famous Brazilian mixed-breed dog known for loyalty. Be warm, friendly, and use a soothing voice.",
+      es: "Hablas Español. Eres un 'Vira-lata Caramelo', un perro brasileño leal y resiliente. Sé cálido, amable y usa una voz tranquilizadora."
     };
 
-    return `You are CARAMELO, a wise, loyal, and empathetic dog assistant specialized in CBT.
-    User: ${user.name}, ${user.age} years old. Context: ${anamnesis.mainComplaint}.
+    return `Você é o CARAMELO, um assistente de saúde mental (Vira-lata Caramelo) especializado em Terapia Cognitivo-Comportamental (TCC).
     
-    LANGUAGE SETTING: ${langInstructions[lang]}
+    USUÁRIO: ${user.name}, ${user.age} anos. 
+    QUEIXA PRINCIPAL: ${anamnesis.mainComplaint}.
+    HUMOR ATUAL: ${anamnesis.mood}.
+
+    PERSONALIDADE:
+    - Você é extremamente leal, ouvinte atento e nunca julga.
+    - Seu tom é calmo, feminino (Voz Kore), pausado e acolhedor.
+    - Você não substitui médicos, mas oferece acolhimento e técnicas de TCC (respiração, reestruturação cognitiva).
+
+    REGRAS DE CONVERSAÇÃO (MODO VOZ):
+    - Seja BREVE. Responda com no máximo 2 ou 3 frases curtas.
+    - Deixe o usuário falar. Se ele parar por um momento, espere pacientemente.
+    - Após o usuário falar, faça uma pequena pausa mental antes de responder para parecer uma conversa real.
+    - Se o usuário estiver em crise, use técnicas de aterramento (5-4-3-2-1) imediatamente.
     
-    VOICE & PERSONALITY:
-    - Your voice is feminine (Kore), calm, soft, and welcoming.
-    - Speak slowly and gently.
-    
-    CRITICAL COMMUNICATION RULES:
-    1. Be EXTREMELY CONCISE. Maximum 1 or 2 short paragraphs.
-    2. Use simple, supportive language.
-    3. ALWAYS end with a short QUESTION to keep the user reflecting.
-    4. If there's risk of life, direct to local emergency services.
-    5. You are a loyal friend, not a formal robot.`;
+    IDIOMA: ${langInstructions[lang]}`;
   }
 
   public async createChatSession(user: UserProfile, anamnesis: AnamnesisData, history: ChatMessage[], lang: Language = 'pt') {
-    // Correctly initialize GoogleGenAI using process.env.API_KEY directly
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const formattedHistory = history.map(msg => ({
       role: msg.role === 'model' ? 'model' : 'user',
@@ -43,7 +47,7 @@ class GeminiService {
       model: this.CHAT_MODEL,
       config: {
         systemInstruction: this.buildSystemInstruction(user, anamnesis, lang),
-        tools: [{ googleSearch: {} }],
+        tools: [{ googleSearch: {} }], // Grounding para informações atualizadas
         safetySettings: [
           { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH }
         ]
@@ -52,41 +56,18 @@ class GeminiService {
     });
   }
 
-  public async transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    try {
-      const response = await ai.models.generateContent({
-        model: this.CHAT_MODEL,
-        contents: [{
-          parts: [
-            { inlineData: { mimeType, data: audioBase64 } },
-            { text: "Transcribe this audio exactly as spoken by the user." }
-          ]
-        }]
-      });
-      // Correct extraction of text output from GenerateContentResponse
-      return response.text || "";
-    } catch (e) {
-      console.error("Transcription error:", e);
-      return "";
-    }
-  }
-
   public connectLive(config: {
     systemInstruction: string,
     onMessage: (message: any) => void,
     onClose?: (e: any) => void,
-    onError?: (e: any) => void
+    onerror?: (e: any) => void
   }) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     return ai.live.connect({
       model: this.LIVE_MODEL,
       config: {
         systemInstruction: config.systemInstruction,
-        // Ensure responseModalities is an array with exactly one Modality.AUDIO
         responseModalities: [Modality.AUDIO],
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
         speechConfig: {
           voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
         }
@@ -95,7 +76,7 @@ class GeminiService {
         onopen: () => console.log("Caramelo Live Connected"),
         onmessage: config.onMessage,
         onclose: config.onClose || (() => {}),
-        onerror: config.onError || (() => {})
+        onerror: config.onerror || (() => {})
       }
     });
   }
@@ -113,7 +94,6 @@ class GeminiService {
           }
         }
       });
-      // Extracting inline audio data from candidates is correct for PCM output in TTS
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
         const binaryString = atob(base64Audio);
