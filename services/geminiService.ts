@@ -1,72 +1,78 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, GenerateContentResponse } from "@google/genai";
 import { UserProfile, ChatMessage } from "../types";
 
 class GeminiService {
   private readonly MODEL_PRO = 'gemini-3-pro-preview';
   private readonly MODEL_FLASH = 'gemini-3-flash-preview';
-  private readonly MODEL_AUDIO = 'gemini-2.5-flash-native-audio-preview-09-2025';
+  private readonly MODEL_LIVE = 'gemini-2.5-flash-native-audio-preview-09-2025';
+
+  public static getSystemInstruction(userName: string, isAudio: boolean = false) {
+    const base = `Você é o CARAMELO, um vira-lata brasileiro leal e assistente de auto-cuidado para ${userName}.`;
+    const audioContext = isAudio ? `
+      MODO VOZ ATIVADO:
+      1. Sua voz é de uma mulher leve, tranquila e serena.
+      2. Fale com pausas naturais, de forma calma, como uma terapeuta experiente.
+      3. Seja breve, pois conversas por áudio longas cansam o usuário.
+      4. Se o usuário estiver ansioso, guie-o em uma respiração lenta antes de continuar.` : "";
+
+    return `${base}
+${audioContext}
+
+DIRETRIZES:
+- Máximo de 3 frases.
+- Tom empático e acolhedor (🐶🧡).
+- Nunca use jargão médico.
+- Termine com uma pergunta doce.`;
+  }
 
   private getAI() {
     return new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
 
-  public async getResponse(prompt: string, user: UserProfile, history: ChatMessage[], mode: 'chat' | 'thinking' | 'search' = 'chat') {
+  public async getResponseStream(prompt: string, user: UserProfile, history: ChatMessage[], mode: 'chat' | 'thinking' | 'search' = 'chat') {
     const ai = this.getAI();
     const modelToUse = mode === 'thinking' ? this.MODEL_PRO : this.MODEL_FLASH;
     
-    // Instrução focada em auto-cuidado, estilo Woebot, sem termos clínicos.
-    const systemInstruction = `Você é o CARAMELO, um vira-lata caramelo leal e seu assistente de auto-cuidado pessoal.
-    O usuário se chama ${user.name}.
-    
-    REGRAS DE OURO:
-    1. BREVIDADE ABSOLUTA: Responda em NO MÁXIMO 3 frases curtas.
-    2. TOM: Seja caloroso, empático e amigável como um cachorro fiel.
-    3. PROIBIDO: Nunca use palavras como "Terapia", "Psicologia", "TCC", "Psicoterapeuta" ou "Clínico".
-    4. PAPEL: Você é um assistente de auto-cuidado e acolhimento, um amigo que ouve.
-    5. INTERAÇÃO: Se o usuário estiver triste, ofereça ouvir ou uma ferramenta rápida (respirar, diário).
-    6. SEGURANÇA: Se detectar risco de vida, mencione o CVV 188 de forma carinhosa.`;
-
     const config: any = {
-      systemInstruction,
+      systemInstruction: GeminiService.getSystemInstruction(user.name),
+      temperature: 0.6,
+      maxOutputTokens: 250,
     };
 
     if (mode === 'thinking') {
-      // Pensamento profundo requer budget de tokens, mas mantemos o output final curto.
-      config.thinkingConfig = { thinkingBudget: 16000 };
-      config.maxOutputTokens = 17000;
-    } else {
-      config.maxOutputTokens = 400; // Respostas curtas economizam tempo e tokens
-    }
-
-    if (mode === 'search') {
+      config.thinkingConfig = { thinkingBudget: 8000 };
+      config.maxOutputTokens = 1000;
+    } else if (mode === 'search') {
       config.tools = [{ googleSearch: {} }];
     }
 
-    const contents: any[] = history.slice(-5).map(m => ({
+    const contents: any[] = history.slice(-4).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text }]
     }));
     contents.push({ role: 'user', parts: [{ text: prompt }] });
 
-    return ai.models.generateContent({
+    return ai.models.generateContentStream({
       model: modelToUse,
       contents,
       config
     });
   }
 
-  public connectLiveAudio(callbacks: any) {
+  public async connectLiveAudio(userName: string, callbacks: any) {
     const ai = this.getAI();
     return ai.live.connect({
-      model: this.MODEL_AUDIO,
+      model: this.MODEL_LIVE,
       callbacks,
       config: {
         responseModalities: [Modality.AUDIO],
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } // Voz amigável
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } }
         },
-        systemInstruction: "Você é o Caramelo, um assistente de auto-cuidado em áudio. Seja extremamente breve e acolhedor. Nunca cite termos médicos ou psicológicos."
+        systemInstruction: GeminiService.getSystemInstruction(userName, true)
       }
     });
   }

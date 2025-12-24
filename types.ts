@@ -22,6 +22,7 @@ export interface UserProfile {
   company?: string;
   phone?: string;
   age: number;
+  whatsapp_linked?: boolean;
 }
 
 export interface GroundingSource {

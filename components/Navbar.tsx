@@ -92,7 +92,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { view: AppView.ABOUT_US, labelKey: 'aboutus' },
   ];
 
-  // Ajuste de cores para contraste (Dia e Noite)
   const textColor = scrolled 
     ? 'text-gray-800 dark:text-white' 
     : (isDarkMode ? 'text-white' : 'text-gray-800 font-bold');
@@ -137,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           <div className="hidden sm:flex items-center gap-4">
             <button onClick={() => onNavigate(AppView.LOGIN)} className={`text-sm font-black transition-colors ${textColor}`}>{t.login}</button>
-            <button onClick={onStart} className="bg-caramel-500 hover:bg-caramel-600 text-white text-sm font-black py-3 px-7 rounded-full shadow-lg shadow-caramel-200 dark:shadow-none transition-all active:scale-95 whitespace-nowrap">
+            <button onClick={onStart} className="bg-caramel-500 hover:bg-caramel-600 text-white text-sm font-black py-3 px-7 rounded-full shadow-lg transition-all active:scale-95 whitespace-nowrap">
               {activeView === AppView.LANDING ? t.register : t.app}
             </button>
           </div>
@@ -165,16 +164,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                </button>
              ))}
              <div className="h-px bg-gray-100 dark:bg-gray-800"></div>
-             <div className="space-y-4">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Idioma / Language</p>
-                <div className="flex gap-4">
-                   {(['pt', 'en', 'es'] as Language[]).map(l => (
-                      <button key={l} onClick={() => { onLanguageChange(l); setMobileMenuOpen(false); }} className={`text-3xl p-4 rounded-3xl border-2 transition-all ${language === l ? 'border-caramel-500 bg-caramel-50 text-caramel-600' : 'border-gray-100 dark:border-gray-700'}`}>
-                         {l === 'pt' ? '🇧🇷' : l === 'en' ? '🇺🇸' : '🇪🇸'}
-                      </button>
-                   ))}
-                </div>
-             </div>
           </div>
           <div className="space-y-4 mt-auto pt-10">
             <button onClick={() => {onNavigate(AppView.LOGIN); setMobileMenuOpen(false);}} className="w-full py-5 rounded-2xl font-black text-xl text-gray-600 dark:text-gray-300 border-2 border-gray-100 dark:border-gray-800">{t.login}</button>
